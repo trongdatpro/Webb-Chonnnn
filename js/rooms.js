@@ -442,6 +442,171 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
 
+    // Cập nhật giao diện modal chỉnh sửa booking
+    const modal = document.getElementById('edit-booking-modal');
+    const modalContent = document.getElementById('edit-booking-content');
+    const summaryBar = document.getElementById('summary-bar');
+
+    const checkinInput = document.getElementById('modal-checkin');
+    const checkoutInput = document.getElementById('modal-checkout');
+    const adultCountSpan = document.getElementById('modal-adult-count');
+    const childCountSpan = document.getElementById('modal-child-count');
+    const childrenAgeInput = document.getElementById('modal-children-age');
+
+    let adultCountLocal = adults || 2;
+    let childCountLocal = children || 0;
+
+    // Setup dates constraint (min today)
+    const today = new Date().toISOString().split('T')[0];
+    if (checkinInput && checkoutInput) {
+        checkinInput.min = today;
+
+        checkinInput.addEventListener('change', () => {
+            if (checkinInput.value) {
+                const ciDate = new Date(checkinInput.value);
+                const nextDay = new Date(ciDate);
+                nextDay.setDate(nextDay.getDate() + 1);
+                checkoutInput.min = nextDay.toISOString().split('T')[0];
+
+                if (checkoutInput.value && new Date(checkoutInput.value) <= ciDate) {
+                    checkoutInput.value = nextDay.toISOString().split('T')[0];
+                }
+            }
+        });
+    }
+
+    const updateGuestDisplay = () => {
+        if (adultCountSpan) adultCountSpan.textContent = adultCountLocal;
+        if (childCountSpan) childCountSpan.textContent = childCountLocal;
+
+        if (childCountLocal > 0) {
+            if (childrenAgeInput) childrenAgeInput.classList.remove('hidden');
+        } else {
+            if (childrenAgeInput) {
+                childrenAgeInput.classList.add('hidden');
+                childrenAgeInput.value = "";
+            }
+        }
+    };
+
+    const minusAdult = document.getElementById('modal-minus-adult');
+    if (minusAdult) minusAdult.addEventListener('click', () => {
+        if (adultCountLocal > 1) {
+            adultCountLocal--;
+            updateGuestDisplay();
+        }
+    });
+
+    const plusAdult = document.getElementById('modal-plus-adult');
+    if (plusAdult) plusAdult.addEventListener('click', () => {
+        adultCountLocal++;
+        updateGuestDisplay();
+    });
+
+    const minusChild = document.getElementById('modal-minus-child');
+    if (minusChild) minusChild.addEventListener('click', () => {
+        if (childCountLocal > 0) {
+            childCountLocal--;
+            updateGuestDisplay();
+        }
+    });
+
+    const plusChild = document.getElementById('modal-plus-child');
+    if (plusChild) plusChild.addEventListener('click', () => {
+        childCountLocal++;
+        updateGuestDisplay();
+    });
+
+    const openModal = () => {
+        if (checkinInput) checkinInput.value = bookingData.checkin;
+        if (checkoutInput) checkoutInput.value = bookingData.checkout;
+
+        adultCountLocal = parseInt(bookingData.adults) || 2;
+        childCountLocal = parseInt(bookingData.children) || 0;
+
+        if (childrenAgeInput) childrenAgeInput.value = bookingData.childrenAgeCategory || "";
+
+        if (checkinInput && checkinInput.value) {
+            const ciDate = new Date(checkinInput.value);
+            const nextDay = new Date(ciDate);
+            nextDay.setDate(nextDay.getDate() + 1);
+            if (checkoutInput) checkoutInput.min = nextDay.toISOString().split('T')[0];
+        }
+
+        updateGuestDisplay();
+
+        if (modal) {
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            // Trigger reflow
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            if (modalContent) modalContent.classList.remove('translate-y-full');
+        }
+    };
+
+    const closeModal = () => {
+        if (modal) {
+            modal.classList.add('opacity-0');
+            if (modalContent) modalContent.classList.add('translate-y-full');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+    };
+
+    if (summaryBar) summaryBar.addEventListener('click', openModal);
+
+    const closeBtn = document.getElementById('close-modal-btn');
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+
+    if (modal) {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) closeModal();
+        });
+    }
+
+    const saveBtn = document.getElementById('modal-save-btn');
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const ci = checkinInput ? checkinInput.value : '';
+            const co = checkoutInput ? checkoutInput.value : '';
+            const ad = adultCountLocal;
+            const ch = childCountLocal;
+            const age = childrenAgeInput ? childrenAgeInput.value : '';
+
+            if (!ci || !co) {
+                alert("Vui lòng chọn ngày nhận và trả phòng");
+                return;
+            }
+
+            const ciDate = new Date(ci);
+            const coDate = new Date(co);
+            if (ciDate >= coDate) {
+                alert("Ngày trả phòng phải sau ngày nhận phòng");
+                return;
+            }
+
+            if (ch > 0 && !age) {
+                alert("Vui lòng chọn độ tuổi của trẻ em");
+                return;
+            }
+
+            const updatedBooking = {
+                ...bookingData,
+                checkin: ci,
+                checkout: co,
+                adults: ad,
+                children: ch,
+                childrenAgeCategory: age
+            };
+
+            sessionStorage.setItem('chonVillageBooking', JSON.stringify(updatedBooking));
+            window.location.reload();
+        });
+    }
+
 });
 
 // Global function callback for inline onclick

@@ -84,21 +84,20 @@
         <!-- Summary Bar -->
         <!-- Summary Bar -->
         <div id="summary-bar"
-            class="px-4 py-3 bg-white border-b border-primary/20 cursor-pointer active:bg-slate-50 transition-colors shadow-sm relative z-40">
+            class="px-4 py-3 bg-white border-b border-primary/20 cursor-pointer active:bg-slate-50 transition-colors shadow-sm relative z-40 flex items-center justify-between">
             <div class="flex flex-col gap-1.5 justify-center">
                 <div class="flex items-center gap-2 text-primary">
                     <span class="material-symbols-outlined text-lg">calendar_month</span>
-                    <span id="summary-dates" class="font-bold text-base tracking-wide text-graphite">22/10 -
-                        23/10</span>
+                    <span id="summary-dates" class="font-bold text-base tracking-wide text-graphite"></span>
                 </div>
                 <div class="flex items-center gap-2 text-primary/70">
                     <span class="material-symbols-outlined text-base">group</span>
-                    <span id="summary-guests" class="text-sm font-medium tracking-wide">2 Người lớn, 1 Trẻ em</span>
+                    <span id="summary-guests" class="text-sm font-medium tracking-wide"></span>
                 </div>
             </div>
-            <div
-                class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center justify-center h-8 w-8 rounded-full bg-primary/10 text-primary">
-                <span class="material-symbols-outlined text-sm">edit</span>
+            <div class="flex items-center gap-1.5 text-primary bg-primary/10 px-3 py-1.5 rounded-full">
+                <span class="text-xs font-bold uppercase tracking-wider">Thay đổi ngày</span>
+                <span class="material-symbols-outlined text-[1rem]">edit</span>
             </div>
         </div>
         <!-- Main Content -->
@@ -168,91 +167,117 @@
 
     <!-- Edit Booking Modal -->
     <div id="edit-booking-modal"
-        class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex-col justify-end sm:justify-center opacity-0 transition-opacity duration-300">
-        <div class="bg-white rounded-t-3xl sm:rounded-2xl p-6 w-full max-w-lg mx-auto transform translate-y-full sm:translate-y-0 transition-transform duration-300"
+        class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex-col justify-end sm:justify-center items-center opacity-0 transition-opacity duration-300 p-4">
+        <div class="bg-[#FFFFF5] rounded-sm p-1 w-full max-w-md transform translate-y-full sm:translate-y-0 transition-transform duration-300 relative"
             id="edit-booking-content">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="font-display font-bold text-xl text-graphite">Thay đổi lựa chọn</h3>
-                <button id="close-modal-btn" class="p-2 bg-slate-100 rounded-full text-slate-500 hover:bg-slate-200">
-                    <span class="material-symbols-outlined text-base">close</span>
-                </button>
-            </div>
-
-            <div class="space-y-5">
-                <!-- Check-in/out -->
-                <div class="grid grid-cols-2 gap-3 relative">
-                    <div class="bg-background-light p-3 rounded-xl border border-primary/20">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ngày Nhận
-                            Phòng</label>
-                        <input type="date" id="modal-checkin"
-                            class="w-full bg-transparent text-graphite font-bold outline-none mt-1" />
-                    </div>
-                    <div class="bg-background-light p-3 rounded-xl border border-primary/20">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ngày Trả
-                            Phòng</label>
-                        <input type="date" id="modal-checkout"
-                            class="w-full bg-transparent text-graphite font-bold outline-none mt-1" />
-                    </div>
-                </div>
-
-                <!-- Guests -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-background-light p-3 rounded-xl border border-primary/20">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Người
-                            lớn</label>
-                        <select id="modal-adults" class="w-full bg-transparent text-graphite font-bold outline-none">
-                            <option value="1">1 Người</option>
-                            <option value="2">2 Người</option>
-                            <option value="3">3 Người</option>
-                            <option value="4">4 Người</option>
-                            <option value="5">5 Người</option>
-                            <option value="6">6 Người</option>
-                            <option value="7">7 Người</option>
-                            <option value="8">8 Người</option>
-                            <option value="9">9 Người</option>
-                            <option value="10">10 Người</option>
-                        </select>
-                    </div>
-                    <div class="bg-background-light p-3 rounded-xl border border-primary/20">
-                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Trẻ
-                            em</label>
-                        <select id="modal-children" class="w-full bg-transparent text-graphite font-bold outline-none">
-                            <option value="0">0 Trẻ em</option>
-                            <option value="1">1 Trẻ em</option>
-                            <option value="2">2 Trẻ em</option>
-                            <option value="3">3 Trẻ em</option>
-                            <option value="4">4 Trẻ em</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Children Age -->
-                <div id="modal-children-age-group"
-                    class="bg-background-light p-3 rounded-xl border border-primary/20 hidden">
-                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Độ tuổi trẻ
-                        em</label>
-                    <select id="modal-children-age" class="w-full bg-transparent text-graphite font-bold outline-none">
-                        <option value="">-- Vui lòng chọn --</option>
-                        <option value="1">1 Tuổi</option>
-                        <option value="2">2 Tuổi</option>
-                        <option value="3">3 Tuổi</option>
-                        <option value="4">4 Tuổi</option>
-                        <option value="5">5 Tuổi</option>
-                        <option value="6">6 Tuổi</option>
-                        <option value="7">7 Tuổi</option>
-                        <option value="8">8 Tuổi</option>
-                        <option value="9">9 Tuổi</option>
-                        <option value="10">10 Tuổi</option>
-                        <option value="11">11 Tuổi</option>
-                        <option value="12">12 Tuổi</option>
-                    </select>
-                </div>
-            </div>
-
-            <button id="modal-save-btn"
-                class="w-full mt-8 bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] text-white font-display italic tracking-wider font-bold py-4 rounded-xl shadow-lg active:scale-95 transition-all">
-                Cập Nhật Booking
+            <button id="close-modal-btn"
+                class="absolute -top-10 right-0 p-2 text-white hover:text-primary transition-colors z-50">
+                <span class="material-symbols-outlined text-2xl">close</span>
             </button>
+            <div class="rococo-border bg-[#FFFFF5] p-6 flex flex-col items-center">
+                <!-- Acanthus Leaf Corners -->
+                <div class="acanthus-corner top-0 left-0">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="acanthus-corner top-0 right-0 rotate-90">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="acanthus-corner bottom-0 left-0 -rotate-90">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="acanthus-corner bottom-0 right-0 rotate-180">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+
+                <h3 class="font-display font-bold text-2xl text-graphite mb-6">Thay đổi lựa chọn</h3>
+
+                <div class="w-full space-y-6">
+                    <!-- Dates -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] uppercase tracking-widest text-[#c8a96a] font-bold mb-1">Nhận
+                                phòng</label>
+                            <div
+                                class="border border-[#c8a96a]/40 p-1.5 flex justify-between items-center bg-transparent mt-1 h-9">
+                                <input id="modal-checkin"
+                                    class="bg-transparent border-none focus:ring-0 text-graphite text-sm p-0 rounded-none outline-none w-full"
+                                    type="date" />
+                            </div>
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] uppercase tracking-widest text-[#c8a96a] font-bold mb-1">Trả
+                                phòng</label>
+                            <div
+                                class="border border-[#c8a96a]/40 p-1.5 flex justify-between items-center bg-transparent mt-1 h-9">
+                                <input id="modal-checkout"
+                                    class="bg-transparent border-none focus:ring-0 text-graphite text-sm p-0 rounded-none outline-none w-full"
+                                    type="date" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Guests Section -->
+                    <div class="space-y-4 pt-4">
+                        <div class="flex items-center justify-between border-b border-[#c8a96a]/20 pb-4">
+                            <span class="text-xs font-serif text-graphite uppercase tracking-widest">Người Lớn</span>
+                            <div class="flex items-center gap-3">
+                                <button id="modal-minus-adult"
+                                    class="size-6 rounded-full border border-[#c8a96a] text-[#c8a96a] flex items-center justify-center text-xs"
+                                    type="button">-</button>
+                                <span id="modal-adult-count" class="text-graphite font-bold w-4 text-center">2</span>
+                                <button id="modal-plus-adult"
+                                    class="size-6 rounded-full bg-[#c8a96a] text-white flex items-center justify-center text-xs"
+                                    type="button">+</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-[#c8a96a]/20 pb-4">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-serif text-graphite uppercase tracking-widest">Trẻ Em</span>
+                                <select id="modal-children-age"
+                                    class="text-[10px] text-[#c8a96a] bg-transparent border-none py-0 pl-0 pr-5 focus:ring-0 uppercase cursor-pointer hidden mt-1 outline-none">
+                                    <option value="" disabled selected hidden>Chọn độ tuổi</option>
+                                    <option value="1">1 tuổi</option>
+                                    <option value="2">2 tuổi</option>
+                                    <option value="3">3 tuổi</option>
+                                    <option value="4">4 tuổi</option>
+                                    <option value="5">5 tuổi</option>
+                                    <option value="6">6 tuổi</option>
+                                    <option value="7">7 tuổi</option>
+                                    <option value="8">8 tuổi</option>
+                                    <option value="9">9 tuổi</option>
+                                    <option value="10">10 tuổi</option>
+                                    <option value="11">11 tuổi</option>
+                                    <option value="12">12 tuổi</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button id="modal-minus-child"
+                                    class="size-6 rounded-full border border-[#c8a96a] text-[#c8a96a] flex items-center justify-center text-xs"
+                                    type="button">-</button>
+                                <span id="modal-child-count" class="text-graphite font-bold w-4 text-center">0</span>
+                                <button id="modal-plus-child"
+                                    class="size-6 rounded-full bg-[#c8a96a] text-white flex items-center justify-center text-xs"
+                                    type="button">+</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full mt-8 pt-2">
+                    <button id="modal-save-btn"
+                        class="w-full bg-[#c8a96a] hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] text-white font-serif uppercase tracking-widest py-3.5 rounded-none shadow-lg active:scale-95 transition-all text-sm font-bold flex items-center justify-center cursor-pointer border-none outline-none">
+                        THAY ĐỔI LỰA CHỌN
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
