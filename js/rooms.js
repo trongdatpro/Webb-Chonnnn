@@ -434,9 +434,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Nếu tất cả phòng đều bị ẩn (hết phòng hoàn toàn trong các ngày đã chọn)
         if (roomsContainer.children.length === 0) {
             roomsContainer.innerHTML = `
-                <div class="flex flex-col items-center justify-center space-y-4 my-16 opacity-0 animate-[fadeIn_1s_ease-out_forwards]">
+                <div class="col-span-full flex flex-col items-center justify-center space-y-4 my-16">
                     <span class="material-symbols-outlined text-4xl text-slate-300">event_busy</span>
-                    <p class="text-center text-primary font-display italic text-lg">Rất tiếc, Chồn đã kín phòng trong giai đoạn này. Xin vui lòng chọn ngày khác!</p>
+                    <p class="text-center text-[#c8a96a] font-display italic text-xl">Ngày mà bạn chọn đã hết phòng, xin hãy đổi ngày khác.</p>
                 </div>
             `;
         }

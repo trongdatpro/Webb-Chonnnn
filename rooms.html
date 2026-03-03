@@ -7,7 +7,7 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Playfair+Display:wght@400;700&amp;display=swap"
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Playfair+Display:wght@400;700&amp;family=Cinzel:wght@400;700&amp;display=swap"
         rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
         rel="stylesheet" />
@@ -26,6 +26,7 @@
                         "graphite": "#1A1A1A",
                     },
                     fontFamily: {
+                        "header": ["Cinzel", "serif"],
                         "display": ["Playfair Display", "Noto Serif", "serif"],
                         "sans": ["Noto Serif", "serif"]
                     },
@@ -95,9 +96,13 @@
                     <span id="summary-guests" class="text-sm font-medium tracking-wide"></span>
                 </div>
             </div>
-            <div class="flex items-center gap-1.5 text-primary bg-primary/10 px-3 py-1.5 rounded-full">
-                <span class="text-xs font-bold uppercase tracking-wider">Thay đổi ngày</span>
-                <span class="material-symbols-outlined text-[1rem]">edit</span>
+            <div
+                class="group flex items-center gap-1.5 text-[#C8A96A] bg-[#FAF6EC] px-4 py-2 rounded-full hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-[#FAF6EC] transition-all duration-500 shadow-sm border border-[#C8A96A]/20">
+                <span
+                    class="text-xs font-header font-bold uppercase tracking-widest group-hover:text-[#FAF6EC] transition-colors duration-500">Thay
+                    đổi ngày</span>
+                <span
+                    class="material-symbols-outlined text-[1rem] group-hover:text-[#FAF6EC] transition-colors duration-500">edit</span>
             </div>
         </div>
         <!-- Main Content -->
@@ -197,7 +202,8 @@
                     </svg>
                 </div>
 
-                <h3 class="font-display font-bold text-2xl text-graphite mb-6">Thay đổi lựa chọn</h3>
+                <h3 class="font-display font-bold text-2xl text-graphite uppercase tracking-wide mb-6">THAY ĐỔI NGÀY
+                </h3>
 
                 <div class="w-full space-y-6">
                     <!-- Dates -->
@@ -273,8 +279,8 @@
 
                 <div class="w-full mt-8 pt-2">
                     <button id="modal-save-btn"
-                        class="w-full bg-[#c8a96a] hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] text-white font-serif uppercase tracking-widest py-3.5 rounded-none shadow-lg active:scale-95 transition-all text-sm font-bold flex items-center justify-center cursor-pointer border-none outline-none">
-                        THAY ĐỔI LỰA CHỌN
+                        class="w-full bg-[#c8a96a] hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-[#FFFFF5] font-header uppercase tracking-widest py-4 transition-all duration-500 text-sm shadow-lg flex items-center justify-center cursor-pointer border-none outline-none">
+                        ĐỔI NGÀY
                     </button>
                 </div>
             </div>
