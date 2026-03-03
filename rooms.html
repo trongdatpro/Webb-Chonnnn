@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Playfair+Display:wght@400;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c8aa6a",
+                        "background-light": "#FFFFF5",
+                        "background-dark": "#1e1b14",
+                        "graphite": "#1A1A1A",
+                    },
+                    fontFamily: {
+                        "display": ["Playfair Display", "Noto Serif", "serif"],
+                        "sans": ["Noto Serif", "serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px" },
+                },
+            },
+        }
+    </script>
+    <style>
+        .rococo-border {
+            border: 2px solid #c8aa6a;
+            position: relative;
+            padding: 4px;
+        }
+
+        .rococo-border::after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            border: 1px solid #c8aa6a;
+            pointer-events: none;
+        }
+
+        .acanthus-corner {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            color: #c8aa6a;
+            z-index: 10;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark font-sans text-graphite dark:text-slate-100">
+    <div class="relative flex min-h-screen w-full flex-col">
+        <!-- Header -->
+        <header
+            class="flex items-center justify-between px-4 py-4 border-b border-primary/20 bg-background-light/80 backdrop-blur-md sticky top-0 z-50">
+            <button class="flex items-center justify-center p-2 text-primary">
+                <span class="material-symbols-outlined">arrow_back_ios</span>
+            </button>
+            <h1 class="font-display text-xl font-bold tracking-tight text-graphite">Chồn Village</h1>
+            <button class="flex items-center justify-center p-2 text-primary">
+                <span class="material-symbols-outlined">search</span>
+            </button>
+        </header>
+        <!-- Summary Bar -->
+        <div class="px-4 py-3 bg-white/50 border-b border-primary/10">
+            <div class="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-primary">
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">calendar_month</span>
+                    <span id="summary-dates">22/10 - 23/10</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="material-symbols-outlined text-sm">group</span>
+                    <span id="summary-guests">2 Người lớn, 1 Trẻ em</span>
+                </div>
+            </div>
+        </div>
+        <!-- Main Content -->
+        <main class="flex-1 pb-16">
+            <div class="p-6 text-center">
+                <h2 class="font-display text-3xl font-bold text-graphite mb-2">Danh Sách Phòng</h2>
+                <div class="flex justify-center mb-6">
+                    <div class="h-0.5 w-16 bg-primary"></div>
+                </div>
+                <!-- Filters -->
+                <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
+                    <button
+                        class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-white text-sm font-medium">
+                        Tất cả
+                    </button>
+                    <button
+                        class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-primary/30 bg-white px-5 text-graphite text-sm font-medium">
+                        Hạng sang <span class="material-symbols-outlined text-xs">keyboard_arrow_down</span>
+                    </button>
+                    <button
+                        class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-primary/30 bg-white px-5 text-graphite text-sm font-medium">
+                        Gia đình <span class="material-symbols-outlined text-xs">keyboard_arrow_down</span>
+                    </button>
+                </div>
+            </div>
+            <!-- Room Grid -->
+            <div id="rooms-container" class="px-4 space-y-8">
+                <!-- Dynamic Rooms will be populated here -->
+            </div>
+        </main>
+    </div>
+
+    <script src="js/rooms.js?v=2.9"></script>
+
+    <!-- Floating Contact Buttons -->
+    <div class="fixed bottom-8 right-6 z-50 flex flex-col gap-3">
+        <!-- Phone Button -->
+        <a href="tel:0369877478"
+            class="group relative flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-primary transition-transform hover:scale-110">
+            <span class="material-symbols-outlined text-primary text-lg">call</span>
+            <span
+                class="absolute right-full mr-3 hidden rounded-md bg-graphite/90 px-3 py-1.5 text-xs font-bold tracking-widest text-white uppercase group-hover:block whitespace-nowrap">Gọi
+                Hotline</span>
+        </a>
+
+        <!-- Fanpage Button -->
+        <a href="https://facebook.com/chon.village" target="_blank"
+            class="group relative flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-primary transition-transform hover:scale-110">
+            <svg class="h-5 w-5 fill-[#1877F2]" viewBox="0 0 24 24">
+                <path
+                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+            </svg>
+            <span
+                class="absolute right-full mr-3 hidden rounded-md bg-[#1877F2]/90 px-3 py-1.5 text-xs font-bold tracking-widest text-white uppercase group-hover:block whitespace-nowrap">Fanpage</span>
+        </a>
+
+        <!-- Zalo Button -->
+        <a href="https://zalo.me/0369877478" target="_blank"
+            class="group relative flex h-9 w-9 items-center justify-center rounded-full bg-white shadow-lg border border-primary transition-transform hover:scale-110">
+            <img class="h-5 w-5 object-contain"
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/1200px-Icon_of_Zalo.svg.png"
+                alt="Zalo" />
+            <span
+                class="absolute right-full mr-3 hidden rounded-md bg-[#0068FF]/90 px-3 py-1.5 text-xs font-bold tracking-widest text-white uppercase group-hover:block whitespace-nowrap">Zalo</span>
+        </a>
+    </div>
+</body>
+
+</html>

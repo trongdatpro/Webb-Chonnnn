@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Chồn Village Gatekeeper UI</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif:wght@400;700&amp;family=Playfair+Display:wght@400;700&amp;family=Cinzel:wght@400;700&amp;display=swap"
+        rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#c8a96a",
+                        "background-light": "#f8f7f6",
+                        "background-dark": "#1e1b14",
+                        "ivory": "#FFFFF5",
+                        "graphite": "#1A1A1A"
+                    },
+                    fontFamily: {
+                        "display": ["Playfair Display", "Noto Serif", "serif"],
+                        "header": ["Cinzel", "serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "lg": "1rem",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        .rococo-border {
+            border: 2px solid #c8a96a;
+            position: relative;
+            padding: 2px;
+        }
+
+        .rococo-border::after {
+            content: '';
+            position: absolute;
+            top: 4px;
+            left: 4px;
+            right: 4px;
+            bottom: 4px;
+            border: 1px solid #c8a96a;
+            pointer-events: none;
+        }
+
+        .corner-leaf {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            color: #c8a96a;
+            z-index: 10;
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="bg-[#1a1a1a] font-display text-graphite">
+    <!-- Full Screen Background Overlay -->
+    <div class="relative min-h-screen w-full flex items-center justify-center p-4 pb-24 overflow-hidden">
+        <!-- Blurred Backdrop Image -->
+        <div class="absolute inset-0 z-0">
+            <div class="absolute inset-0 bg-black/40 z-10 backdrop-blur-sm"></div>
+            <div class="w-full h-full bg-cover bg-center" data-alt="Luxury Rococo bedroom with ornate gold furniture"
+                style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAmDCsufgB7RpeL0KS9fMamfv7WphQa91OqFvFv6HJghpJFpDRijQeVj_CgbCXUDImNj2bSbo_xO5qRKpdG95NLB7gged1ZNRCZsFZA7_K8s2HMf2oOi4TC2jol1VaCOh3rFUxFKmHJ9wAwcqzvKlneCvuifc1YeciTH3TVgNU0y0vIDb9C0iq2n0lLtMeEFZSX1AUcdyBZ6NhbML5fcXvyO8-RGjCOLHMx38STHHqL2ctk9KNuv0JtTPoi8llmr27yZ0PtZLGF-xed')">
+            </div>
+        </div>
+        <!-- Main Invitation Card -->
+        <div class="relative z-20 w-full max-w-md bg-ivory shadow-2xl rounded-sm p-1">
+            <div class="rococo-border bg-ivory p-8 pb-2 flex flex-col items-center">
+                <!-- Acanthus Leaf Corners -->
+                <div class="corner-leaf top-0 left-0">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="corner-leaf top-0 right-0 rotate-90">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="corner-leaf bottom-0 left-0 -rotate-90">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="corner-leaf bottom-0 right-0 rotate-180">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <!-- Header Content -->
+                <div class="text-center mb-8">
+                    <h1 class="font-display text-graphite text-3xl font-bold mb-1">Rất xin chào bạn đến với Chồn
+                        Village!</h1>
+                    <div class="h-px w-16 bg-primary mx-auto my-3"></div>
+                    <p class="italic text-graphite/70 text-sm">Xin vui lòng điền đầy đủ thông tin dưới đây.</p>
+                </div>
+                <!-- Booking Form -->
+                <form class="w-full space-y-5">
+                    <!-- Dates -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Nhận
+                                phòng</label>
+                            <input id="checkin-date"
+                                class="bg-transparent border-b border-primary/40 focus:border-primary focus:ring-0 text-graphite text-sm p-1 rounded-none outline-none"
+                                type="date" />
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Trả
+                                phòng</label>
+                            <input id="checkout-date"
+                                class="bg-transparent border-b border-primary/40 focus:border-primary focus:ring-0 text-graphite text-sm p-1 rounded-none outline-none"
+                                type="date" />
+                        </div>
+                    </div>
+                    <!-- Guests Section -->
+                    <div class="space-y-4 pt-2">
+                        <div class="flex items-center justify-between border-b border-primary/20 pb-2">
+                            <span class="text-xs font-header text-graphite uppercase">Người Lớn</span>
+                            <div class="flex items-center gap-3">
+                                <button id="minus-adult"
+                                    class="size-6 rounded-full border border-primary text-primary flex items-center justify-center text-xs"
+                                    type="button">-</button>
+                                <span id="adult-count" class="text-graphite font-bold w-4 text-center">2</span>
+                                <button id="plus-adult"
+                                    class="size-6 rounded-full bg-primary text-ivory flex items-center justify-center text-xs"
+                                    type="button">+</button>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between border-b border-primary/20 pb-2">
+                            <div class="flex flex-col">
+                                <span class="text-xs font-header text-graphite uppercase">Trẻ Em</span>
+                                <select id="children-age"
+                                    class="text-[10px] text-primary bg-transparent border-none py-0 pl-0 pr-5 focus:ring-0 uppercase cursor-pointer">
+                                    <option value="" disabled selected hidden>Chọn độ tuổi</option>
+                                    <option value="1">1 tuổi</option>
+                                    <option value="2">2 tuổi</option>
+                                    <option value="3">3 tuổi</option>
+                                    <option value="4">4 tuổi</option>
+                                    <option value="5">5 tuổi</option>
+                                    <option value="6">6 tuổi</option>
+                                    <option value="7">7 tuổi</option>
+                                    <option value="8">8 tuổi</option>
+                                    <option value="9">9 tuổi</option>
+                                    <option value="10">10 tuổi</option>
+                                    <option value="11">11 tuổi</option>
+                                    <option value="12">12 tuổi</option>
+                                </select>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button id="minus-child"
+                                    class="size-6 rounded-full border border-primary text-primary flex items-center justify-center text-xs"
+                                    type="button">-</button>
+                                <span id="child-count" class="text-graphite font-bold w-4 text-center">0</span>
+                                <button id="plus-child"
+                                    class="size-6 rounded-full bg-primary text-ivory flex items-center justify-center text-xs"
+                                    type="button">+</button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Contact -->
+                    <div class="flex flex-col pt-2">
+                        <div class="flex items-center mb-1">
+                            <label class="text-[10px] uppercase tracking-widest text-primary font-bold">Xin vui lòng
+                                điền số zalo</label>
+                        </div>
+                        <div class="relative flex items-center">
+                            <span class="material-symbols-outlined absolute left-0 text-primary text-sm">phone</span>
+                            <input id="contact-info"
+                                class="w-full bg-transparent border-b border-primary/40 focus:border-primary focus:ring-0 text-graphite text-sm p-1 pl-6 rounded-none outline-none"
+                                placeholder="+84 000 000 000" type="tel" />
+                        </div>
+                    </div>
+                    <!-- Submit & Footnotes Container -->
+                    <div class="relative w-full mt-4 pb-4">
+                        <!-- Submit -->
+                        <button id="submit-booking"
+                            class="w-full bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-ivory font-header uppercase tracking-widest py-4 transition-all duration-500 text-sm shadow-lg flex items-center justify-center"
+                            type="submit">
+                            <span id="submit-text">Xem phòng trống</span>
+                        </button>
+
+                        <!-- Footnote & Warning (Absolute inside button area) -->
+                        <div class="absolute -bottom-6 left-0 w-full pointer-events-none flex flex-col items-center">
+                            <p id="night-warning"
+                                class="hidden text-[10px] text-center font-bold italic leading-tight hover:max-w-prose"
+                                style="color: #8B4513;">
+                                Chồn ưu tiên nhận khách từ 2 đêm. Với booking 1 đêm, vui lòng liên hệ Fanpage!
+                            </p>
+                            <p class="text-[10px] text-center font-bold italic leading-tight" style="color: #8B4513;">
+                                Chồn ưu tiên nhận khách từ 2 đêm. Với booking 1 đêm, vui lòng liên hệ Zalo.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-center gap-4 pt-5 pb-4">
+                        <!-- Phone Button -->
+                        <a href="tel:0369877478"
+                            class="group relative flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md border border-primary transition-transform hover:scale-110">
+                            <span class="material-symbols-outlined text-primary text-xl">call</span>
+                        </a>
+
+                        <!-- Fanpage Button -->
+                        <a href="https://facebook.com/chon.village" target="_blank"
+                            class="group relative flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md border border-primary transition-transform hover:scale-110">
+                            <svg class="h-5 w-5 fill-[#1877F2]" viewBox="0 0 24 24">
+                                <path
+                                    d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.469h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.469h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
+                            </svg>
+                        </a>
+
+                        <!-- Zalo Button -->
+                        <a href="https://zalo.me/0369877478" target="_blank"
+                            class="group relative flex h-10 w-10 items-center justify-center rounded-full bg-white shadow-md border border-primary transition-transform hover:scale-110">
+                            <img class="h-6 w-6 object-contain"
+                                src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Icon_of_Zalo.svg/1200px-Icon_of_Zalo.svg.png"
+                                alt="Zalo" />
+                        </a>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkinInput = document.getElementById('checkin-date');
+            const checkoutInput = document.getElementById('checkout-date');
+            const warningText = document.getElementById('night-warning');
+            const submitBtn = document.getElementById('submit-booking');
+
+            // Setup dates constraint (min today)
+            const today = new Date().toISOString().split('T')[0];
+            checkinInput.min = today;
+
+            checkinInput.addEventListener('change', () => {
+                // Check out must be at least the day after check in
+                if (checkinInput.value) {
+                    const checkinDate = new Date(checkinInput.value);
+                    const nextDay = new Date(checkinDate);
+                    nextDay.setDate(nextDay.getDate() + 1);
+                    checkoutInput.min = nextDay.toISOString().split('T')[0];
+                }
+            });
+
+            // Setup Guest Counters
+            const minusAdult = document.getElementById('minus-adult');
+            const plusAdult = document.getElementById('plus-adult');
+            const adultCountSpan = document.getElementById('adult-count');
+            let adultCount = 2;
+
+            minusAdult.addEventListener('click', () => {
+                if (adultCount > 1) {
+                    adultCount--;
+                    adultCountSpan.textContent = adultCount;
+                }
+            });
+
+            plusAdult.addEventListener('click', () => {
+                adultCount++;
+                adultCountSpan.textContent = adultCount;
+            });
+
+            const minusChild = document.getElementById('minus-child');
+            const plusChild = document.getElementById('plus-child');
+            const childCountSpan = document.getElementById('child-count');
+            let childCount = 0;
+
+            minusChild.addEventListener('click', () => {
+                if (childCount > 0) {
+                    childCount--;
+                    childCountSpan.textContent = childCount;
+                }
+            });
+
+            plusChild.addEventListener('click', () => {
+                childCount++;
+                childCountSpan.textContent = childCount;
+            });
+
+            // Form Submit Validation
+            const form = document.querySelector('form');
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevent default submission
+                warningText.classList.add('hidden'); // Reset warning
+
+                const checkinVal = checkinInput.value;
+                const checkoutVal = checkoutInput.value;
+                const phoneVal = document.getElementById('contact-info').value;
+                const childrenAgeVal = document.getElementById('children-age').value;
+
+                if (!checkinVal || !checkoutVal || !phoneVal) {
+                    alert("Vui lòng điền đầy đủ thông tin (ngày và số điện thoại).");
+                    return;
+                }
+
+                if (childCount > 0 && !childrenAgeVal) {
+                    alert("Vui lòng chọn độ tuổi của trẻ em.");
+                    return;
+                }
+
+                const checkinDateObj = new Date(checkinVal);
+                const checkout = new Date(checkoutVal);
+                const diffTime = Math.abs(checkout - checkinDateObj);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                let allowed = false;
+
+                if (diffDays === 1) {
+                    alert('Chồn ưu tiên nhận khách từ 2 đêm. Với booking 1 đêm, vui lòng liên hệ Fanpage!');
+                    warningText.classList.remove('hidden');
+                    return;
+                } else if (diffDays >= 2) {
+                    allowed = true;
+                }
+
+                if (!allowed) {
+                    warningText.classList.remove('hidden');
+                    return;
+                }
+
+                // If allowed, save to sessionStorage and redirect
+                const bookingData = {
+                    checkin: checkinVal,
+                    checkout: checkoutVal,
+                    adults: adultCount,
+                    children: childCount,
+                    childrenAgeCategory: document.getElementById('children-age').value,
+                    phone: phoneVal
+                };
+                sessionStorage.setItem('chonVillageBooking', JSON.stringify(bookingData));
+                window.location.href = "rooms.html";
+            });
+        });
+    </script>
+
+</body>
+
+</html>
