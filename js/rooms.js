@@ -396,6 +396,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 ? `<div class="absolute top-4 left-4 bg-primary/90 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Có sẵn</div>`
                 : `<div class="absolute top-4 left-4 bg-slate-400 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Hết phòng</div>`;
 
+            const isAlreadySelected = selectedRooms.some(r => r.id === room.id);
             const priceHtml = isAvailable
                 ? `<div class="flex flex-col gap-0.5 -ml-3">
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
@@ -408,9 +409,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="text-[12px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                     </div>
                    </div>
-                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[14px] pt-0.5 pb-1 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
-                       <span>Thêm</span>
-                       <span>Phòng</span>
+                   <button data-room-id="${room.id}" onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' 
+                       class="${isAlreadySelected ? 'bg-[#C8A96A] text-graphite pointer-events-none' : 'bg-primary text-white'} hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite font-display italic tracking-wider font-bold text-[14px] pt-0.5 pb-1 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
+                       ${isAlreadySelected ? '<span>Đã</span><span>Thêm</span>' : '<span>Chọn</span><span>Phòng</span>'}
                    </button>`
                 : `<div class="flex flex-col gap-0.5 opacity-50 -ml-3">
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
@@ -439,7 +440,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <svg fill="currentColor" viewbox="0 0 24 24"><path d="M2,2 L10,2 C6,2 2,6 2,10 L2,2 Z"></path></svg>
                 </div>
                 <div class="relative h-56 overflow-hidden border-4 border-double border-primary/60 m-2 rounded-sm">
-                    <img alt="${room.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="${room.img}"/>
+                    <img id="img-${room.id}" alt="${room.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="${room.img}"/>
                     ${badgeHtml}
                 </div>
                 <div class="px-5 pb-5 pt-0">
@@ -454,6 +455,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                         ${amenitiesHtml}
                     </div>
                     ${specialAttrHtml}
+                    <!-- Đường kẻ phân cách rõ ràng màu vàng/primary -->
+                    <div class="h-px bg-primary/40 w-full mt-3"></div>
                     <div class="flex items-center justify-between pt-2 mt-1">
                         ${priceHtml}
                     </div>
@@ -717,11 +720,146 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 });
 
-// Global function callback for inline onclick
-window.selectRoom = function (btn, roomData) {
-    btn.textContent = "Đang xử lý...";
-    sessionStorage.setItem('chonVillageSelectedRoom', JSON.stringify(roomData));
-    setTimeout(() => {
-        window.location.href = 'checkout.html';
-    }, 300);
+// --- Waitlist Logic (Phòng chờ đặt) ---
+let selectedRooms = [];
+
+// Hàm render danh sách phòng chờ dưới footer
+function renderWaitlist() {
+    const container = document.getElementById('waitlist-items');
+    const footer = document.getElementById('waitlist-footer');
+    if (!container || !footer) return;
+
+    // 1. Đồng bộ trạng thái các nút trên danh sách phòng
+    const allRoomButtons = document.querySelectorAll('button[data-room-id]');
+    allRoomButtons.forEach(btn => {
+        const roomId = btn.getAttribute('data-room-id');
+        const isSelected = selectedRooms.some(r => String(r.id) === String(roomId));
+
+        if (isSelected) {
+            btn.innerHTML = '<span>Đã</span><span>Thêm</span>';
+            btn.className = btn.className.replace('bg-primary', 'bg-[#C8A96A]').replace('text-white', 'text-graphite') + ' pointer-events-none';
+            // Đảm bảo không bị trùng class
+            btn.classList.add('bg-[#C8A96A]', 'text-graphite', 'pointer-events-none');
+            btn.classList.remove('bg-primary', 'text-white');
+        } else {
+            btn.innerHTML = '<span>Chọn</span><span>Phòng</span>';
+            btn.classList.remove('bg-[#C8A96A]', 'text-graphite', 'pointer-events-none');
+            btn.classList.add('bg-primary', 'text-white');
+        }
+    });
+
+    const contactContainer = document.getElementById('floating-contact-container');
+
+    if (selectedRooms.length === 0) {
+        footer.classList.add('translate-y-full');
+        if (contactContainer) contactContainer.style.bottom = '32px'; // bottom-8
+        return;
+    }
+
+    footer.classList.remove('translate-y-full');
+    if (contactContainer) contactContainer.style.bottom = '95px';
+
+    container.innerHTML = selectedRooms.map((room, index) => `
+        <div class="relative group/item shrink-0">
+            <div class="w-12 h-12 rounded-lg overflow-hidden border-2 border-primary shadow-sm bg-white">
+                <img src="${room.img}" class="w-full h-full object-cover">
+            </div>
+            <!-- Nút X để xóa phòng -->
+            <button onclick="removeFromWaitlist(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full size-5 flex items-center justify-center shadow-md active:scale-90 transition-transform z-10">
+                <span class="material-symbols-outlined text-[12px] font-bold">close</span>
+            </button>
+        </div>
+    `).join('');
+}
+
+// Hàm xóa phòng khỏi danh sách
+window.removeFromWaitlist = function (index) {
+    selectedRooms.splice(index, 1);
+    renderWaitlist();
 };
+
+// Hiệu ứng "Bay" (Fly to Footer)
+function animateFly(startEl, targetEl, imgSrc) {
+    const flyContainer = document.getElementById('fly-container');
+    if (!flyContainer || !startEl || !targetEl) return;
+
+    const startRect = startEl.getBoundingClientRect();
+    const targetRect = targetEl.getBoundingClientRect();
+
+    const clone = document.createElement('img');
+    clone.src = imgSrc;
+    clone.className = 'fixed object-cover rounded-sm z-[200] transition-all duration-800 cubic-bezier(0.4, 0, 0.2, 1)';
+
+    // Vị trí bắt đầu
+    clone.style.top = `${startRect.top}px`;
+    clone.style.left = `${startRect.left}px`;
+    clone.style.width = `${startRect.width}px`;
+    clone.style.height = `${startRect.height}px`;
+    clone.style.opacity = '1';
+
+    flyContainer.appendChild(clone);
+
+    // Bắt đầu bay (dùng requestAnimationFrame để đảm bảo animation chạy mượt)
+    requestAnimationFrame(() => {
+        clone.style.top = `${targetRect.top}px`;
+        clone.style.left = `${targetRect.left + 20}px`; // Bay vào khu vực danh sách
+        clone.style.width = '40px';
+        clone.style.height = '40px';
+        clone.style.opacity = '0.5';
+        clone.style.borderRadius = '50%';
+    });
+
+    // Xóa clone sau khi bay xong
+    setTimeout(() => {
+        clone.remove();
+        renderWaitlist();
+    }, 800);
+}
+
+// Override hàm selectRoom để hỗ trợ waitlist
+window.selectRoom = function (btn, roomData) {
+    // 1. Kiểm tra nếu phòng đã có trong list thì không thêm nữa
+    const isAlreadyIn = selectedRooms.some(r => String(r.id) === String(roomData.id));
+    if (isAlreadyIn) return;
+
+    // 2. Chạy hiệu ứng bay
+    const imgEl = document.getElementById(`img-${roomData.id}`);
+    const targetEl = document.getElementById('confirm-waitlist-btn');
+
+    if (imgEl && targetEl) {
+        animateFly(imgEl, targetEl, roomData.img);
+    }
+
+    // 3. Lưu vào mảng local
+    selectedRooms.push(roomData);
+
+    // 4. Chuyển nút sang trạng thái "Đã Thêm" ngay lập tức để tránh bấm trùng
+    btn.innerHTML = '<span>Đã</span><span>Thêm</span>';
+    btn.classList.add('bg-[#C8A96A]', 'text-graphite', 'pointer-events-none');
+    btn.classList.remove('bg-primary', 'text-white');
+};
+
+// Xử lý nút Xác nhận đặt cuối cùng
+document.addEventListener('DOMContentLoaded', () => {
+    const confirmBtn = document.getElementById('confirm-waitlist-btn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            if (selectedRooms.length === 0) return;
+
+            confirmBtn.textContent = "Đang xử lý...";
+
+            // Lưu danh sách phòng vào sessionStorage
+            // Lưu ý: checkout.html hiện tại nhận một object duy nhất 'chonVillageSelectedRoom'. 
+            // Em sẽ gửi phòng đầu tiên hoặc có thể upgrade checkout sau.
+            // Để demo, em gửi phòng cuối cùng được chọn hoặc format lại logic checkout.
+            sessionStorage.setItem('chonVillageSelectedRooms', JSON.stringify(selectedRooms));
+
+            // Giữ tương thích với logic cũ (lấy phòng đầu tiên)
+            sessionStorage.setItem('chonVillageSelectedRoom', JSON.stringify(selectedRooms[0]));
+
+            setTimeout(() => {
+                window.location.href = 'checkout.html';
+            }, 500);
+        });
+    }
+});
