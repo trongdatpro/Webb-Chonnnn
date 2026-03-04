@@ -60,6 +60,33 @@
             color: #c8aa6a;
             z-index: 10;
         }
+
+        @keyframes slideUpElastic {
+            0% {
+                transform: translateY(40px);
+                opacity: 0;
+            }
+
+            60% {
+                transform: translateY(-8px);
+                opacity: 1;
+            }
+
+            80% {
+                transform: translateY(2px);
+            }
+
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .animate-elastic-slide {
+            animation: slideUpElastic 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            opacity: 0;
+            /* Keep it hidden until animation starts */
+        }
     </style>
     <style>
         body {

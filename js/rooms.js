@@ -406,7 +406,12 @@ document.addEventListener('DOMContentLoaded', async () => {
                    <button disabled class="bg-slate-200 text-slate-400 font-bold py-2 px-6 rounded cursor-not-allowed">Hết Phòng</button>`;
 
             const card = document.createElement('div');
-            card.className = "rococo-border bg-white shadow-sm overflow-hidden group";
+            card.className = "rococo-border bg-white shadow-sm overflow-hidden group animate-elastic-slide";
+
+            // Calculate a staggered delay based on how many cards are already in the container
+            const currentItemCount = roomsContainer.children.length;
+            card.style.animationDelay = `${currentItemCount * 0.15}s`;
+
             card.innerHTML = `
                 <div class="acanthus-corner top-0 left-0">
                     <svg fill="currentColor" viewbox="0 0 24 24"><path d="M2,2 L10,2 C6,2 2,6 2,10 L2,2 Z"></path></svg>
