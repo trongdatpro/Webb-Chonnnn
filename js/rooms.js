@@ -737,8 +737,6 @@ function renderWaitlist() {
 
         if (isSelected) {
             btn.innerHTML = '<span>Đã</span><span>Thêm</span>';
-            btn.className = btn.className.replace('bg-primary', 'bg-[#C8A96A]').replace('text-white', 'text-graphite') + ' pointer-events-none';
-            // Đảm bảo không bị trùng class
             btn.classList.add('bg-[#C8A96A]', 'text-graphite', 'pointer-events-none');
             btn.classList.remove('bg-primary', 'text-white');
         } else {
@@ -752,15 +750,15 @@ function renderWaitlist() {
 
     if (selectedRooms.length === 0) {
         footer.classList.add('translate-y-full');
-        if (contactContainer) contactContainer.style.bottom = '32px'; // bottom-8
+        if (contactContainer) contactContainer.style.bottom = '128px'; // bottom-32
         return;
     }
 
     footer.classList.remove('translate-y-full');
-    if (contactContainer) contactContainer.style.bottom = '95px';
+    if (contactContainer) contactContainer.style.bottom = '240px'; // Higher to avoid all overlaps
 
     container.innerHTML = selectedRooms.map((room, index) => `
-        <div class="relative group/item shrink-0">
+        <div id="waitlist-item-${room.id}" class="relative group/item shrink-0 transition-opacity duration-300">
             <div class="w-12 h-12 rounded-lg overflow-hidden border-2 border-primary shadow-sm bg-white">
                 <img src="${room.img}" class="w-full h-full object-cover">
             </div>
@@ -779,16 +777,19 @@ window.removeFromWaitlist = function (index) {
 };
 
 // Hiệu ứng "Bay" (Fly to Footer)
-function animateFly(startEl, targetEl, imgSrc) {
+function animateFly(startEl, targetEl, imgSrc, callback) {
     const flyContainer = document.getElementById('fly-container');
-    if (!flyContainer || !startEl || !targetEl) return;
+    if (!flyContainer || !startEl || !targetEl) {
+        if (callback) callback();
+        return;
+    }
 
     const startRect = startEl.getBoundingClientRect();
     const targetRect = targetEl.getBoundingClientRect();
 
     const clone = document.createElement('img');
     clone.src = imgSrc;
-    clone.className = 'fixed object-cover rounded-sm z-[200] transition-all duration-800 cubic-bezier(0.4, 0, 0.2, 1)';
+    clone.className = 'fixed object-cover rounded-sm z-[200] transition-all duration-700 cubic-bezier(0.25, 1, 0.5, 1)';
 
     // Vị trí bắt đầu
     clone.style.top = `${startRect.top}px`;
@@ -799,21 +800,21 @@ function animateFly(startEl, targetEl, imgSrc) {
 
     flyContainer.appendChild(clone);
 
-    // Bắt đầu bay (dùng requestAnimationFrame để đảm bảo animation chạy mượt)
+    // Bắt đầu bay
     requestAnimationFrame(() => {
         clone.style.top = `${targetRect.top}px`;
-        clone.style.left = `${targetRect.left + 20}px`; // Bay vào khu vực danh sách
-        clone.style.width = '40px';
-        clone.style.height = '40px';
-        clone.style.opacity = '0.5';
-        clone.style.borderRadius = '50%';
+        clone.style.left = `${targetRect.left}px`;
+        clone.style.width = `${targetRect.width}px`;
+        clone.style.height = `${targetRect.height}px`;
+        clone.style.opacity = '0.7';
+        clone.style.borderRadius = '8px';
     });
 
     // Xóa clone sau khi bay xong
     setTimeout(() => {
         clone.remove();
-        renderWaitlist();
-    }, 800);
+        if (callback) callback();
+    }, 700);
 }
 
 // Override hàm selectRoom để hỗ trợ waitlist
@@ -822,21 +823,29 @@ window.selectRoom = function (btn, roomData) {
     const isAlreadyIn = selectedRooms.some(r => String(r.id) === String(roomData.id));
     if (isAlreadyIn) return;
 
-    // 2. Chạy hiệu ứng bay
-    const imgEl = document.getElementById(`img-${roomData.id}`);
-    const targetEl = document.getElementById('confirm-waitlist-btn');
-
-    if (imgEl && targetEl) {
-        animateFly(imgEl, targetEl, roomData.img);
-    }
-
-    // 3. Lưu vào mảng local
-    selectedRooms.push(roomData);
-
-    // 4. Chuyển nút sang trạng thái "Đã Thêm" ngay lập tức để tránh bấm trùng
+    // 2. Chuyển nút sang trạng thái "Đã Thêm" ngay lập tức
     btn.innerHTML = '<span>Đã</span><span>Thêm</span>';
     btn.classList.add('bg-[#C8A96A]', 'text-graphite', 'pointer-events-none');
     btn.classList.remove('bg-primary', 'text-white');
+
+    // 3. Thêm vào mảng local
+    selectedRooms.push(roomData);
+
+    // 4. Render lại waitlist để tạo placeholder
+    renderWaitlist();
+
+    // 5. Tìm placeholder vừa tạo và ẩn nó đi để chờ ảnh bay tới
+    const targetItem = document.getElementById(`waitlist-item-${roomData.id}`);
+    const imgEl = document.getElementById(`img-${roomData.id}`);
+
+    if (targetItem) {
+        targetItem.style.opacity = '0'; // Ẩn item thực tế
+
+        // Chạy hiệu ứng bay đến đúng vị trí của placeholder
+        animateFly(imgEl, targetItem, roomData.img, () => {
+            targetItem.style.opacity = '1'; // Hiện item thực tế khi bay xong
+        });
+    }
 };
 
 // Xử lý nút Xác nhận đặt cuối cùng

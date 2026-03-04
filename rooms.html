@@ -145,7 +145,7 @@
             </div>
         </div>
         <!-- Main Content -->
-        <main class="flex-1 pb-32">
+        <main class="flex-1 pb-36">
             <div class="p-6 text-center">
                 <h2 class="font-display text-3xl font-bold text-graphite mb-2">Danh Sách Phòng</h2>
                 <div class="flex justify-center mb-6">
@@ -170,7 +170,7 @@
     <!-- Floating Contact Buttons -->
     <!-- Floating Contact Action Button -->
     <div id="floating-contact-container"
-        class="fixed bottom-8 right-2 z-50 flex items-center justify-end transition-all duration-500">
+        class="fixed bottom-32 right-2 z-50 flex items-center justify-end transition-all duration-500">
         <!-- Hidden sliding icons -->
         <div id="contact-icons-slide"
             class="flex items-center gap-3 mr-4 opacity-0 translate-x-10 pointer-events-none transition-all duration-300 ease-out">
@@ -241,7 +241,7 @@
 
     <!-- Edit Booking Modal -->
     <div id="edit-booking-modal"
-        class="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm hidden flex-col justify-end sm:justify-center items-center opacity-0 transition-opacity duration-300 p-4">
+        class="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm hidden flex-col justify-end sm:justify-center items-center opacity-0 transition-opacity duration-300 p-4">
         <div class="bg-[#FFFFF5] rounded-sm p-1 w-full max-w-md transform translate-y-full sm:translate-y-0 transition-transform duration-300 relative"
             id="edit-booking-content">
             <button id="close-modal-btn"
@@ -360,7 +360,45 @@
 
     <!-- Waitlist Footer -->
     <div id="waitlist-footer"
-        class="fixed bottom-0 left-0 w-full bg-white/80 backdrop-blur-lg border-t border-primary/20 p-4 shadow-2xl z-[100] transform translate-y-full transition-transform duration-500">
+        class="fixed bottom-0 left-0 w-full bg-[#FFFFF5]/90 backdrop-blur-lg z-[100] transform translate-y-full transition-transform duration-500 p-1 sm:p-2">
+        <div class="max-w-4xl mx-auto relative p-0.5">
+            <!-- Rococo Border Wrapper -->
+            <div class="rococo-border bg-[#FFFFF5]/40 p-2 sm:p-3 flex flex-col items-center gap-2 shadow-2xl relative">
+                <!-- Acanthus Leaf Corners -->
+                <div class="acanthus-corner top-0 left-0">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="acanthus-corner top-0 right-0 rotate-90">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="acanthus-corner bottom-0 left-0 -rotate-90">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+                <div class="acanthus-corner bottom-0 right-0 rotate-180">
+                    <svg fill="currentColor" viewbox="0 0 100 100">
+                        <path d="M10,10 Q40,10 40,40 Q10,40 10,10 M0,0 L20,0 Q20,20 0,20 Z"></path>
+                    </svg>
+                </div>
+
+                <!-- Confirm Button on TOP -->
+                <button id="confirm-waitlist-btn"
+                    class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white px-6 py-2 rounded-full font-header font-bold uppercase tracking-widest text-[10px] sm:text-[11px] shadow-lg active:scale-95 transition-all duration-500 w-max">
+                    Xác nhận đặt
+                </button>
+
+                <!-- Waitlist Items BELOW -->
+                <div class="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 w-full justify-center"
+                    id="waitlist-items">
+                    <!-- Selected room thumbnails will appear here -->
+                </div>
+            </div>
+        </div>
         <style>
             .no-scrollbar::-webkit-scrollbar {
                 display: none;
@@ -371,18 +409,6 @@
                 scrollbar-width: none;
             }
         </style>
-        <div class="max-w-6xl mx-auto flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3 overflow-x-auto no-scrollbar py-1 flex-1" id="waitlist-items">
-                <!-- Selected room thumbnails will appear here -->
-            </div>
-
-            <div class="flex items-center gap-4 shrink-0">
-                <button id="confirm-waitlist-btn"
-                    class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white px-3 py-1.5 rounded-full font-header font-bold uppercase tracking-tight text-[10px] shadow-md active:scale-95 transition-all duration-300">
-                    Xác nhận đặt
-                </button>
-            </div>
-        </div>
     </div>
 
     <!-- Fly Animation Container -->
