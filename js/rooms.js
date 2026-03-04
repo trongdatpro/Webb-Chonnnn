@@ -406,11 +406,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    <button disabled class="bg-slate-200 text-slate-400 font-bold py-2 px-6 rounded cursor-not-allowed">Hết Phòng</button>`;
 
             const card = document.createElement('div');
-            card.className = "rococo-border bg-white shadow-sm overflow-hidden group animate-elastic-slide";
-
-            // Calculate a staggered delay based on how many cards are already in the container
-            const currentItemCount = roomsContainer.children.length;
-            card.style.animationDelay = `${currentItemCount * 0.15}s`;
+            card.className = "rococo-border bg-white shadow-sm overflow-hidden group scroll-animate-card";
 
             card.innerHTML = `
                 <div class="acanthus-corner top-0 left-0">
@@ -448,6 +444,32 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `;
             roomsContainer.appendChild(card);
+        });
+
+        // Tích hợp Intersection Observer để tạo hiệu ứng scroll
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.1 // Kích hoạt khi 10% thẻ hiển thị trên màn hình
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    // Thêm class is-visible để chạy CSS Animation
+                    entry.target.classList.add('is-visible');
+                    // Ngừng quan sát sau khi đã hiển thị để không lặp lại animation khi cuộn lên xuống nhiều lần (tuỳ chọn)
+                    // observer.unobserve(entry.target);
+                } else {
+                    // Xoá class đi nếu muốn hiệu ứng lặp lại mỗi khi cuộn qua
+                    entry.target.classList.remove('is-visible');
+                }
+            });
+        }, observerOptions);
+
+        // Đăng ký quan sát tất cả các thẻ phòng
+        document.querySelectorAll('.scroll-animate-card').forEach(card => {
+            observer.observe(card);
         });
 
         // Nếu tất cả phòng đều bị ẩn (hết phòng hoàn toàn trong các ngày đã chọn)
