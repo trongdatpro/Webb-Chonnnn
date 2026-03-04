@@ -112,20 +112,11 @@
                 <div class="flex justify-center mb-6">
                     <div class="h-0.5 w-16 bg-primary"></div>
                 </div>
-                <!-- Filters -->
-                <div class="flex gap-3 overflow-x-auto pb-4 no-scrollbar">
-                    <button
-                        class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full bg-primary px-5 text-white text-sm font-medium">
-                        Tất cả
-                    </button>
-                    <button
-                        class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-primary/30 bg-white px-5 text-graphite text-sm font-medium">
-                        Hạng sang <span class="material-symbols-outlined text-xs">keyboard_arrow_down</span>
-                    </button>
-                    <button
-                        class="flex h-9 shrink-0 items-center justify-center gap-2 rounded-full border border-primary/30 bg-white px-5 text-graphite text-sm font-medium">
-                        Gia đình <span class="material-symbols-outlined text-xs">keyboard_arrow_down</span>
-                    </button>
+                <!-- Message -->
+                <div id="available-rooms-message" class="flex justify-center pb-4 px-4 hidden">
+                    <p class="text-xl font-display text-primary italic text-center">
+                        Những phòng đang hiển thị là những phòng trống vào ngày bạn chọn.
+                    </p>
                 </div>
             </div>
             <!-- Room Grid -->
