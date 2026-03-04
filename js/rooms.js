@@ -473,7 +473,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                     // observer.unobserve(entry.target);
                 } else {
                     // Xoá class đi nếu muốn hiệu ứng lặp lại mỗi khi cuộn qua
-                    entry.target.classList.remove('is-visible');
+                    // Fix lỗi nhấp nháy: Chỉ xoá class khi thẻ trượt ra khỏi MÀN HÌNH BÊN DƯỚI (top > 0)
+                    // Nếu thẻ trượt lên trên khuất vào thanh header (top < 0), ta giữ nguyên class để nó không bị reset liên tục
+                    if (entry.boundingClientRect.top > 0) {
+                        entry.target.classList.remove('is-visible');
+                    }
                 }
             });
         }, observerOptions);
