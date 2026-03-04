@@ -52,50 +52,50 @@ document.addEventListener('DOMContentLoaded', async () => {
     const localRooms = [
         {
             id: "Pink_Room",
-            name: "Phòng Hồng",
+            name: "Pink Room",
             area: "25m²",
-            amenities: ["TV", "Quạt", "Máy sấy tóc", "Bồn tắm"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Quạt", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
             special: null,
             img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBszIcCOa0CWCjss_MP7upd5ntyeuZlNd-qy-EVWN3lr9UhgBanAIi5CS96RMkxee6wi8pmpkosErLjHaQG6gLsd98cYpgj5MN4VbhX8enol2tp16CGha9-8P-9f8dSXQYh8xiWNmWw8ymCT6-wcVdOyJL6QfHCqMU7_FT8y53sViQLbQaPm-2-_E8KjE_r2LF9msyNp1RO-QN-jT3fhMRCrvfA5m1Jc3YB6ZvrxWrYHlgrqrKpdidORn0b6lYApuJqMGjiX15Q4b7B"
         },
         {
             id: "Gray_Room",
-            name: "Phòng Xám Mới",
+            name: "Gray Room",
             area: "25m²",
-            amenities: ["TV", "Điều hòa", "Máy sấy tóc", "Bồn tắm"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Điều hòa", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
             special: null,
             img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCcfj5Vam2igQsoTthQBKHEzAW_Av7L7uswzyXzkjj5YMDOWsSjcjB-7pD3y9GF-Hcezj9x_szQYjEvNS0ugmC4cc8pE7eni27E88bykrPKZEblrDB7KW39L-Qvq6UGHKoejrIgci7wj_iJeZLhbBP4T8XshGBiVns3aUA4f5hFH2F1lzsD8fwrvcr-lZ-_WhCZmZvpjeSDhLXWEPIPcb2w8Ah5i-88SWkqVVUa1utiB3vfCUw9lHSPOJ2uzC_iokcz4s48CLGkcQRP"
         },
         {
             id: "Green_Room",
-            name: "Phòng Xanh",
+            name: "Green Room",
             area: "25m²",
-            amenities: ["Điều hòa", "Máy sấy tóc", "Bồn tắm"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
             special: "Lựa chọn lý tưởng cho trẻ dưới 6 tuổi",
             img: "https://plus.unsplash.com/premium_photo-1678297270385-ad5067126607?q=80&w=600&auto=format&fit=crop"
         },
         {
             id: "Black_Room",
-            name: "Phòng Đen",
+            name: "Black Room",
             area: "32m²",
-            amenities: ["TV 65-inch", "Điều hòa", "Máy sấy tóc", "Bồn tắm"],
+            amenities: ["TV 65 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
             special: null,
             img: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?q=80&w=600&auto=format&fit=crop"
         },
         {
             id: "White_Room",
-            name: "Phòng Trắng",
+            name: "White Room",
             area: "33m²",
-            amenities: ["TV", "Điều hòa", "Máy sấy tóc", "Bồn tắm"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
             special: null,
             img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=600&auto=format&fit=crop"
         },
         {
             id: "Gold_Room",
-            name: "Phòng Vàng",
+            name: "Gold Room",
             area: "33m²",
-            amenities: ["Sân vườn", "Bếp riêng", "Bồn cầu điện tử", "Bồn tắm"],
-            special: "Không gian Hoàng gia Đặc biệt",
+            amenities: ["Bồn cầu điện", "Sưởi khăn tắm", "TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
+            special: "Có sân vườn, bếp riêng",
             img: "https://images.unsplash.com/photo-1582719478250-c894e4dc240e?q=80&w=600&auto=format&fit=crop"
         }
     ];
@@ -422,13 +422,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="p-5">
                     <div class="flex justify-between items-start mb-2">
                         <h3 class="font-display text-2xl font-bold text-graphite">${room.name}</h3>
-                        <div class="text-primary flex gap-0.5" style="font-variation-settings: 'FILL' 1;">
-                            <span class="material-symbols-outlined text-sm">star</span>
-                            <span class="material-symbols-outlined text-sm">star</span>
-                            <span class="material-symbols-outlined text-sm">star</span>
-                            <span class="material-symbols-outlined text-sm">star</span>
-                            <span class="material-symbols-outlined text-sm">star</span>
-                        </div>
                     </div>
                     <div class="flex flex-wrap gap-4 my-4 text-xs text-slate-500">
                         <div class="flex items-center gap-1">
