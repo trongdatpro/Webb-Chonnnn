@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: "Pink_Room",
             name: "Pink Room",
             area: "25m²",
-            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Quạt", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Quạt", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: null,
             img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBszIcCOa0CWCjss_MP7upd5ntyeuZlNd-qy-EVWN3lr9UhgBanAIi5CS96RMkxee6wi8pmpkosErLjHaQG6gLsd98cYpgj5MN4VbhX8enol2tp16CGha9-8P-9f8dSXQYh8xiWNmWw8ymCT6-wcVdOyJL6QfHCqMU7_FT8y53sViQLbQaPm-2-_E8KjE_r2LF9msyNp1RO-QN-jT3fhMRCrvfA5m1Jc3YB6ZvrxWrYHlgrqrKpdidORn0b6lYApuJqMGjiX15Q4b7B"
         },
@@ -62,7 +62,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: "Gray_Room",
             name: "Gray Room",
             area: "25m²",
-            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Điều hòa", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Điều hòa", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: null,
             img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCcfj5Vam2igQsoTthQBKHEzAW_Av7L7uswzyXzkjj5YMDOWsSjcjB-7pD3y9GF-Hcezj9x_szQYjEvNS0ugmC4cc8pE7eni27E88bykrPKZEblrDB7KW39L-Qvq6UGHKoejrIgci7wj_iJeZLhbBP4T8XshGBiVns3aUA4f5hFH2F1lzsD8fwrvcr-lZ-_WhCZmZvpjeSDhLXWEPIPcb2w8Ah5i-88SWkqVVUa1utiB3vfCUw9lHSPOJ2uzC_iokcz4s48CLGkcQRP"
         },
@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: "Green_Room",
             name: "Green Room",
             area: "25m²",
-            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: "Lựa chọn lý tưởng cho trẻ dưới 6 tuổi",
             img: "https://plus.unsplash.com/premium_photo-1678297270385-ad5067126607?q=80&w=600&auto=format&fit=crop"
         },
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: "Black_Room",
             name: "Black Room",
             area: "32m²",
-            amenities: ["TV 65 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
+            amenities: ["TV 65 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: null,
             img: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?q=80&w=600&auto=format&fit=crop"
         },
@@ -86,7 +86,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: "White_Room",
             name: "White Room",
             area: "33m²",
-            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
+            amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: null,
             img: "https://images.unsplash.com/photo-1590490360182-c33d57733427?q=80&w=600&auto=format&fit=crop"
         },
@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             id: "Gold_Room",
             name: "Gold Room",
             area: "33m²",
-            amenities: ["Bồn cầu điện", "Sưởi khăn tắm", "TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân"],
+            amenities: ["Bồn cầu điện", "Sưởi khăn tắm", "TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: "Có sân vườn, bếp riêng",
             img: "https://images.unsplash.com/photo-1582719478250-c894e4dc240e?q=80&w=600&auto=format&fit=crop"
         }
@@ -394,16 +394,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             const priceHtml = isAvailable
                 ? `<div class="flex flex-col gap-0.5">
                     <p class="text-[10px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
-                    <p class="text-[13px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekday)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Trong Tuần (T2 Đến T5)</span></p>
-                    <p class="text-[13px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekend)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Cuối Tuần (T6 Đến CN)</span></p>
+                    <p class="text-[18px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekday)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Trong Tuần (T2 Đến T5)</span></p>
+                    <p class="text-[18px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekend)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Cuối Tuần (T6 Đến CN)</span></p>
                    </div>
-                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-sm py-1.5 px-4 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex items-center justify-center whitespace-nowrap">Chọn Phòng</button>`
+                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[13px] py-1 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex items-center justify-center whitespace-nowrap self-center">Chọn Phòng</button>`
                 : `<div class="flex flex-col gap-0.5 opacity-50">
                     <p class="text-[10px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
-                    <p class="text-[13px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekday)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Trong Tuần (T2 Đến T5)</span></p>
-                    <p class="text-[13px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekend)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Cuối Tuần (T6 Đến CN)</span></p>
+                    <p class="text-[18px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekday)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Trong Tuần (T2 Đến T5)</span></p>
+                    <p class="text-[18px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekend)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Cuối Tuần (T6 Đến CN)</span></p>
                    </div>
-                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-sm py-1.5 px-4 rounded cursor-not-allowed whitespace-nowrap">Hết Phòng</button>`;
+                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[13px] py-1 px-3 rounded cursor-not-allowed whitespace-nowrap self-center">Hết Phòng</button>`;
 
             const card = document.createElement('div');
             card.className = "rococo-border bg-white shadow-sm overflow-hidden group scroll-animate-card";
