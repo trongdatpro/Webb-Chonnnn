@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
     uiLog("Init Room Script...");
 
+    const summaryBar = document.getElementById('summary-bar');
+    const changeDateBtn = document.getElementById('change-date-btn');
+    const headerTitle = document.getElementById('header-title');
+    const headerChangeDateBtn = document.getElementById('header-change-date-btn');
+
     // 1. Check Session Storage
     const bookingDataStr = sessionStorage.getItem('chonVillageBooking');
     if (!bookingDataStr) {
@@ -509,7 +514,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Cập nhật giao diện modal chỉnh sửa booking
     const modal = document.getElementById('edit-booking-modal');
     const modalContent = document.getElementById('edit-booking-content');
-    const summaryBar = document.getElementById('summary-bar');
 
     const checkinInput = document.getElementById('modal-checkin');
     const checkoutInput = document.getElementById('modal-checkout');
@@ -621,6 +625,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     if (summaryBar) summaryBar.addEventListener('click', openModal);
+    if (headerChangeDateBtn) headerChangeDateBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // Ngăn sự kiện nổi bọt nếu có
+        openModal();
+    });
 
     const closeBtn = document.getElementById('close-modal-btn');
     if (closeBtn) closeBtn.addEventListener('click', closeModal);
@@ -669,6 +677,42 @@ document.addEventListener('DOMContentLoaded', async () => {
             sessionStorage.setItem('chonVillageBooking', JSON.stringify(updatedBooking));
             window.location.reload();
         });
+        // Hiệu ứng di chuyển chữ và nút khi cuộn trang
+        if (headerTitle) {
+            window.addEventListener('scroll', function () {
+                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                // Kích hoạt khi cuộn qua khoảng 40px (khi summary bar bắt đầu chạm header)
+                if (scrollTop > 40) {
+                    // 1. Đẩy chữ sang trái
+                    headerTitle.classList.remove('left-1/2', '-translate-x-1/2');
+                    headerTitle.classList.add('left-4', 'translate-x-0');
+
+                    // 2. Hiện nút trên header
+                    if (headerChangeDateBtn) {
+                        headerChangeDateBtn.classList.remove('opacity-0', 'pointer-events-none');
+                        headerChangeDateBtn.classList.add('opacity-100');
+                    }
+
+                    // 3. Ẩn nút ở summary bar (tạo cảm giác nó nhảy lên)
+                    if (changeDateBtn) {
+                        changeDateBtn.classList.add('opacity-0', 'pointer-events-none');
+                    }
+                } else {
+                    // Trả lại trạng thái ban đầu khi ở trên cùng
+                    headerTitle.classList.remove('left-4', 'translate-x-0');
+                    headerTitle.classList.add('left-1/2', '-translate-x-1/2');
+
+                    if (headerChangeDateBtn) {
+                        headerChangeDateBtn.classList.add('opacity-0', 'pointer-events-none');
+                        headerChangeDateBtn.classList.remove('opacity-100');
+                    }
+
+                    if (changeDateBtn) {
+                        changeDateBtn.classList.remove('opacity-0', 'pointer-events-none');
+                    }
+                }
+            });
+        }
     }
 
 });
