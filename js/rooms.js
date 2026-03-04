@@ -394,16 +394,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             const priceHtml = isAvailable
                 ? `<div class="flex flex-col gap-0.5">
                     <p class="text-[10px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
-                    <p class="text-[18px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekday)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Trong Tuần (T2 Đến T5)</span></p>
-                    <p class="text-[18px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekend)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Cuối Tuần (T6 Đến CN)</span></p>
+                    <div class="flex items-baseline gap-1 whitespace-nowrap">
+                        <span class="text-[16px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekday)}</span>
+                        <span class="text-[11px] font-normal text-slate-500">/ Đêm Trong Tuần (T2 Đến T5)</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 whitespace-nowrap">
+                        <span class="text-[16px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekend)}</span>
+                        <span class="text-[11px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
+                    </div>
                    </div>
-                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[13px] py-1 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex items-center justify-center whitespace-nowrap self-center">Chọn Phòng</button>`
+                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[13px] py-1 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex items-center justify-center whitespace-nowrap self-center shrink-0">Chọn Phòng</button>`
                 : `<div class="flex flex-col gap-0.5 opacity-50">
                     <p class="text-[10px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
-                    <p class="text-[18px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekday)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Trong Tuần (T2 Đến T5)</span></p>
-                    <p class="text-[18px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekend)} <span class="text-[9px] font-normal text-slate-500 whitespace-nowrap">/ Đêm Cuối Tuần (T6 Đến CN)</span></p>
+                    <div class="flex items-baseline gap-1 whitespace-nowrap">
+                        <span class="text-[16px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekday)}</span>
+                        <span class="text-[11px] font-normal text-slate-500">/ Đêm Trong Tuần (T2 Đến T5)</span>
+                    </div>
+                    <div class="flex items-baseline gap-1 whitespace-nowrap">
+                        <span class="text-[16px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekend)}</span>
+                        <span class="text-[11px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
+                    </div>
                    </div>
-                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[13px] py-1 px-3 rounded cursor-not-allowed whitespace-nowrap self-center">Hết Phòng</button>`;
+                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[13px] py-1 px-3 rounded cursor-not-allowed whitespace-nowrap self-center shrink-0">Hết Phòng</button>`;
 
             const card = document.createElement('div');
             card.className = "rococo-border bg-white shadow-sm overflow-hidden group scroll-animate-card";
