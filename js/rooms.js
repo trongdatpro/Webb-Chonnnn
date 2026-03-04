@@ -382,7 +382,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const amenitiesHtml = room.amenities.map(am => `
                 <div class="flex items-center gap-1">
-                    <span class="material-symbols-outlined text-lg text-primary">done</span>
+                    <span class="material-symbols-outlined text-xl text-primary">done</span>
                     <span>${am}</span>
                 </div>
             `).join('');
@@ -403,7 +403,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="text-[12px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                     </div>
                    </div>
-                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[14px] py-0.5 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
+                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[14px] pt-0.5 pb-1 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
                        <span>Thêm</span>
                        <span>Phòng</span>
                    </button>`
@@ -418,7 +418,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="text-[12px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                     </div>
                    </div>
-                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[14px] py-0.5 px-3 rounded cursor-not-allowed flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
+                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[14px] pt-0.5 pb-1 px-3 rounded cursor-not-allowed flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
                        <span>Hết</span>
                        <span>Phòng</span>
                    </button>`;
@@ -437,19 +437,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <img alt="${room.name}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src="${room.img}"/>
                     ${badgeHtml}
                 </div>
-                <div class="p-5">
-                    <div class="flex justify-between items-start mb-2">
+                <div class="px-5 pb-5 pt-0">
+                    <div class="flex justify-between items-start mb-0 -mt-1">
                         <h3 class="font-display text-2xl font-bold text-graphite">${room.name}</h3>
                     </div>
-                    <div class="flex flex-wrap gap-4 my-4 text-xs text-slate-500">
+                    <div class="flex flex-wrap gap-x-4 gap-y-1 mt-2 mb-0 text-sm text-slate-500">
                         <div class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-lg text-primary">square_foot</span>
+                            <span class="material-symbols-outlined text-xl text-primary">square_foot</span>
                             <span>${room.area}</span>
                         </div>
                         ${amenitiesHtml}
                     </div>
                     ${specialAttrHtml}
-                    <div class="flex items-center justify-between pt-2 border-t border-primary/10">
+                    <div class="flex items-center justify-between pt-2 mt-1">
                         ${priceHtml}
                     </div>
                 </div>
