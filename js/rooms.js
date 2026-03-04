@@ -403,7 +403,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="text-[13px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                     </div>
                    </div>
-                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[10px] py-0.5 px-2.5 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex items-center justify-center whitespace-nowrap shrink-0 mt-[18px] -mr-1">Thêm Phòng</button>`
+                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[14px] py-2 px-5 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.2] shrink-0 mt-[14px] -mr-1">
+                       <span>Thêm</span>
+                       <span>Phòng</span>
+                   </button>`
                 : `<div class="flex flex-col gap-0.5 opacity-50">
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
                     <div class="flex items-baseline gap-1 whitespace-nowrap">
@@ -415,7 +418,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <span class="text-[13px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                     </div>
                    </div>
-                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[10px] py-0.5 px-2.5 rounded cursor-not-allowed whitespace-nowrap shrink-0 mt-[18px] -mr-1">Hết Phòng</button>`;
+                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[14px] py-2 px-5 rounded cursor-not-allowed flex flex-col items-center justify-center leading-[1.2] shrink-0 mt-[14px] -mr-1">
+                       <span>Hết</span>
+                       <span>Phòng</span>
+                   </button>`;
 
             const card = document.createElement('div');
             card.className = "rococo-border bg-white shadow-sm overflow-hidden group scroll-animate-card";
