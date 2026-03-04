@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 : `<div class="absolute top-4 left-4 bg-slate-400 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">Hết phòng</div>`;
 
             const priceHtml = isAvailable
-                ? `<div class="flex flex-col gap-0.5 -ml-1">
+                ? `<div class="flex flex-col gap-0.5 -ml-3">
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
                     <div class="flex items-baseline gap-1 whitespace-nowrap">
                         <span class="text-[15px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekday)}</span>
@@ -407,7 +407,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                        <span>Thêm</span>
                        <span>Phòng</span>
                    </button>`
-                : `<div class="flex flex-col gap-0.5 opacity-50 -ml-1">
+                : `<div class="flex flex-col gap-0.5 opacity-50 -ml-3">
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
                     <div class="flex items-baseline gap-1 whitespace-nowrap">
                         <span class="text-[15px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekday)}</span>
