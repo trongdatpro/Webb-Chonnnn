@@ -396,14 +396,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
                     <div class="flex items-baseline gap-1 whitespace-nowrap">
                         <span class="text-[15px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekday)}</span>
-                        <span class="text-[13px] font-normal text-slate-500">/ Đêm Trong Tuần (T2 Đến T5)</span>
+                        <span class="text-[12px] font-normal text-slate-500">/ Đêm Trong Tuần (T2 Đến T5)</span>
                     </div>
                     <div class="flex items-baseline gap-1 whitespace-nowrap">
                         <span class="text-[15px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekend)}</span>
-                        <span class="text-[13px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
+                        <span class="text-[12px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                     </div>
                    </div>
-                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[14px] py-1 px-4 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.2] shrink-0 mt-[22px] -mr-3">
+                   <button onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white font-display italic tracking-wider font-bold text-[14px] py-0.5 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
                        <span>Thêm</span>
                        <span>Phòng</span>
                    </button>`
@@ -411,14 +411,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
                     <div class="flex items-baseline gap-1 whitespace-nowrap">
                         <span class="text-[15px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekday)}</span>
-                        <span class="text-[13px] font-normal text-slate-500">/ Đêm Trong Tuần (T2 Đến T5)</span>
+                        <span class="text-[12px] font-normal text-slate-500">/ Đêm Trong Tuần (T2 Đến T5)</span>
                     </div>
                     <div class="flex items-baseline gap-1 whitespace-nowrap">
                         <span class="text-[15px] font-bold text-slate-400 line-through leading-none">${renderCurrency(firstNightWeekend)}</span>
-                        <span class="text-[13px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
+                        <span class="text-[12px] font-normal text-slate-500">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                     </div>
                    </div>
-                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[14px] py-1 px-4 rounded cursor-not-allowed flex flex-col items-center justify-center leading-[1.2] shrink-0 mt-[22px] -mr-3">
+                   <button disabled class="bg-slate-200 text-slate-400 font-bold text-[14px] py-0.5 px-3 rounded cursor-not-allowed flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
                        <span>Hết</span>
                        <span>Phòng</span>
                    </button>`;
