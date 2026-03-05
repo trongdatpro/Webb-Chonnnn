@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             area: "25m²",
             amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Quạt", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: null,
-            img: "https://lh3.googleusercontent.com/aida-public/AB6AXuBszIcCOa0CWCjss_MP7upd5ntyeuZlNd-qy-EVWN3lr9UhgBanAIi5CS96RMkxee6wi8pmpkosErLjHaQG6gLsd98cYpgj5MN4VbhX8enol2tp16CGha9-8P-9f8dSXQYh8xiWNmWw8ymCT6-wcVdOyJL6QfHCqMU7_FT8y53sViQLbQaPm-2-_E8KjE_r2LF9msyNp1RO-QN-jT3fhMRCrvfA5m1Jc3YB6ZvrxWrYHlgrqrKpdidORn0b6lYApuJqMGjiX15Q4b7B"
+            img: "https://images.unsplash.com/photo-1518136247453-74e7b5265980?q=80&w=600&auto=format&fit=crop"
         },
         {
             id: "Gray_Room",
@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             area: "25m²",
             amenities: ["TV 55 inch kết nối Netflix, YouTube,...", "Điều hòa", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: null,
-            img: "https://lh3.googleusercontent.com/aida-public/AB6AXuCcfj5Vam2igQsoTthQBKHEzAW_Av7L7uswzyXzkjj5YMDOWsSjcjB-7pD3y9GF-Hcezj9x_szQYjEvNS0ugmC4cc8pE7eni27E88bykrPKZEblrDB7KW39L-Qvq6UGHKoejrIgci7wj_iJeZLhbBP4T8XshGBiVns3aUA4f5hFH2F1lzsD8fwrvcr-lZ-_WhCZmZvpjeSDhLXWEPIPcb2w8Ah5i-88SWkqVVUa1utiB3vfCUw9lHSPOJ2uzC_iokcz4s48CLGkcQRP"
+            img: "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?q=80&w=600&auto=format&fit=crop"
         },
         {
             id: "Green_Room",
@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             area: "33m²",
             amenities: ["Bồn cầu điện", "Sưởi khăn tắm", "TV 55 inch kết nối Netflix, YouTube,...", "Máy lạnh", "Máy sấy", "Bàn trang điểm", "Giường 1m8", "Toilet riêng có bồn tắm", "Nước suối miễn phí", "Đồ dùng vệ sinh cá nhân", "Bàn ủi hơi nước"],
             special: "Có sân vườn, bếp riêng",
-            img: "https://images.unsplash.com/photo-1582719478250-c894e4dc240e?q=80&w=600&auto=format&fit=crop"
+            img: "https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=600&auto=format&fit=crop"
         }
     ];
 
