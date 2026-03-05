@@ -673,22 +673,36 @@ document.addEventListener('DOMContentLoaded', async () => {
                 checkin: ci,
                 checkout: co,
                 adults: ad,
-                children: ch,
                 childrenAgeCategory: age
             };
 
             sessionStorage.setItem('chonVillageBooking', JSON.stringify(updatedBooking));
             window.location.reload();
         });
-        // Hiệu ứng di chuyển chữ và nút khi cuộn trang
-        if (headerTitle) {
-            window.addEventListener('scroll', function () {
-                let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                // Kích hoạt khi cuộn qua khoảng 40px (khi summary bar bắt đầu chạm header)
-                if (scrollTop > 40) {
-                    // 1. Đẩy chữ sang trái
-                    headerTitle.classList.remove('left-1/2', '-translate-x-1/2');
-                    headerTitle.classList.add('left-4', 'translate-x-0');
+    }
+
+    const headerTitleContainer = document.getElementById('header-title-container');
+    const headerDecorTop = document.getElementById('header-decor-top');
+    const headerDecorBottom = document.getElementById('header-decor-bottom');
+
+    if (summaryBar) {
+        const summaryRect = summaryBar.getBoundingClientRect();
+        const summaryTop = summaryRect.top + window.scrollY;
+
+        // Xử lý Header Animation khi scroll
+        if (headerTitleContainer && headerTitle) {
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > summaryTop) {
+                    // Khi scroll qua Summary Bar
+                    headerTitleContainer.classList.remove('left-1/2', '-translate-x-1/2');
+                    headerTitleContainer.classList.add('left-4', 'translate-x-0');
+
+                    headerTitle.classList.remove('text-[28px]');
+                    headerTitle.classList.add('text-[22px]');
+
+                    // Hiện decorative lines
+                    if (headerDecorTop) headerDecorTop.classList.remove('opacity-0');
+                    if (headerDecorBottom) headerDecorBottom.classList.remove('opacity-0');
 
                     // 2. Hiện nút trên header
                     if (headerChangeDateBtn) {
@@ -702,8 +716,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 } else {
                     // Trả lại trạng thái ban đầu khi ở trên cùng
-                    headerTitle.classList.remove('left-4', 'translate-x-0');
-                    headerTitle.classList.add('left-1/2', '-translate-x-1/2');
+                    headerTitleContainer.classList.remove('left-4', 'translate-x-0');
+                    headerTitleContainer.classList.add('left-1/2', '-translate-x-1/2');
+
+                    headerTitle.classList.remove('text-[22px]');
+                    headerTitle.classList.add('text-[28px]');
+
+                    // Ẩn decorative lines
+                    if (headerDecorTop) headerDecorTop.classList.add('opacity-0');
+                    if (headerDecorBottom) headerDecorBottom.classList.add('opacity-0');
 
                     if (headerChangeDateBtn) {
                         headerChangeDateBtn.classList.add('opacity-0', 'pointer-events-none');
@@ -871,4 +892,225 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 500);
         });
     }
+});
+
+// --- Reviews Logic ---
+const REVIEWS_API_URL = "https://script.google.com/macros/s/AKfycbyKwYdqY1Xd762VehUWY8wCKCdek6rc0lASlrUfZVh33B4X_ozjWSxqDUt3PIz27cg/exec";
+
+// Fallback Mock Data based on the user's screenshot
+const MOCK_REVIEWS = [
+    {
+        name: "Linhh Trúc",
+        info: "Local Guide · 6 bài đánh giá · 10 ảnh",
+        rating: "5/5",
+        time: "3 tuần trước trên Google",
+        content: "100đ cho phòng nghỉ, nhân viên siêu siêu dễ thương và nhiệt tình ạ. Recoment mng tới đây nghỉ dưỡng khi tới đà lạt ạaa. Nhất định lần sau quay lại mình sẽ ghé đây tiếp ạ",
+        tripType: "Chuyến nghỉ mát",
+        travelGroup: "Cặp đôi",
+        roomScore: 5,
+        serviceScore: 5,
+        locationScore: 5,
+        highlights: "Sang trọng, Lãng mạn, Yên tĩnh, Phù hợp với trẻ em, Giá tốt"
+    },
+    {
+        name: "Mai Anh",
+        info: "2 bài đánh giá",
+        rating: "5/5",
+        time: "1 tháng trước trên Google",
+        content: "Phòng ốc cực kỳ sạch sẽ và mang phong cách châu cổ điển rất sang trọng. Điểm cộng lớn là view nhìn ra thung lũng rất chill, ngắm bình minh tuyệt vời.",
+        tripType: "Kỳ nghỉ gia đình",
+        travelGroup: "Gia đình",
+        roomScore: 5,
+        serviceScore: 5,
+        locationScore: 4,
+        highlights: "View đẹp, Yên tĩnh, Sang trọng"
+    },
+    {
+        name: "Minh Quân",
+        info: "10 bài đánh giá",
+        rating: "5/5",
+        time: "2 tháng trước trên Tripadvisor",
+        content: "Trải nghiệm đáng nhớ tại Chồn Village. Nội thất phòng đều được chăm chút tỉ mỉ, giường cực kỳ êm. Bạn nhân viên take care chu đáo từ lúc check in tới check out.",
+        tripType: "Công tác",
+        travelGroup: "Đi một mình",
+        roomScore: 5,
+        serviceScore: 5,
+        locationScore: 5,
+        highlights: "Phục vụ xuất sắc, Sạch sẽ, Giường thoải mái"
+    }
+];
+
+async function loadReviews() {
+    try {
+        const res = await fetch(REVIEWS_API_URL);
+        const data = await res.json();
+        if (data.error || !Array.isArray(data) || data.length === 0) {
+            console.warn("API trả về lỗi hoặc chưa có data, sử dụng Mock Data mẫu cho khách hàng");
+            renderReviews(MOCK_REVIEWS);
+        } else {
+            // Map the parsed data dynamically based on fuzzy column names
+            const parsedData = data.map(row => {
+                const getVal = (possibleKeys) => {
+                    const key = Object.keys(row).find(k => possibleKeys.some(pk => k.toLowerCase().includes(pk)));
+                    return key ? row[key] : "";
+                };
+
+                return {
+                    name: getVal(["tên", "khách", "name", "tác giả"]) || "Khách hàng",
+                    info: getVal(["loại", "guide", "thông tin", "info"]),
+                    rating: getVal(["số sao", "đánh giá", "rating", "điểm"]) || "5/5",
+                    time: getVal(["thời gian", "ngày", "time", "date"]) || "Gần đây",
+                    content: getVal(["nội", "dung", "nhận xét", "content", "review"]) || "",
+                    tripType: getVal(["loại chuyến", "trip"]),
+                    travelGroup: getVal(["nhóm", "khách", "group"]),
+                    roomScore: getVal(["phòng"]),
+                    serviceScore: getVal(["dịch vụ", "service"]),
+                    locationScore: getVal(["vị trí", "location"]),
+                    highlights: getVal(["nổi bật", "highlight", "điểm"])
+                };
+            }).filter(r => r.content && r.name !== "Khách hàng");
+
+            if (parsedData.length > 0) {
+                renderReviews(parsedData);
+            } else {
+                renderReviews(MOCK_REVIEWS);
+            }
+        }
+    } catch (error) {
+        console.error("Lỗi khi fetch reviews từ Google Sheet:", error);
+        renderReviews(MOCK_REVIEWS);
+    }
+}
+
+function renderReviews(reviews) {
+    const section = document.getElementById('reviews-section');
+    const slider = document.getElementById('reviews-slider');
+    if (!section || !slider) return;
+
+    slider.innerHTML = reviews.map((r, i) => {
+        const initials = r.name.trim().substring(0, 2).toUpperCase();
+
+        let starsHtml = '';
+        const starCount = parseInt(String(r.rating).charAt(0)) || 5;
+        for (let s = 0; s < starCount; s++) {
+            starsHtml += `<span class="material-symbols-outlined text-[#C8A96A] text-[14px]" style="font-variation-settings: 'FILL' 1;">star</span>`;
+        }
+
+        const buildDetailRow = (label, val) => {
+            if (!val) return '';
+            return `<div class="flex justify-between items-center text-[12px] border-b border-primary/10 pb-1 mb-1.5">
+                        <span class="text-slate-500 font-bold">${label}:</span>
+                        <span class="text-graphite font-medium text-right max-w-[60%] sm:max-w-[70%]">${val}</span>
+                    </div>`;
+        };
+        const buildScoreItem = (label, val) => {
+            if (!val) return '';
+            return `<div class="flex flex-col items-center">
+                        <span class="text-slate-500 font-bold text-[10px] uppercase">${label}</span>
+                        <span class="text-graphite font-bold text-[13px]">${val}</span>
+                    </div>`;
+        };
+
+        const hasScores = r.roomScore || r.serviceScore || r.locationScore;
+        const scoreRow = hasScores ? `
+            <div class="flex justify-around items-center bg-[#FAF6EC] p-2 rounded-md mt-3 border border-primary/20">
+                ${buildScoreItem('Phòng', r.roomScore)}
+                ${buildScoreItem('Dịch vụ', r.serviceScore)}
+                ${buildScoreItem('Vị trí', r.locationScore)}
+            </div>
+        ` : '';
+
+        return `
+            <div class="snap-start shrink-0 w-[85vw] sm:w-[350px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-[#C8A96A]/20 p-5 flex flex-col relative overflow-hidden active:scale-[0.98] transition-all duration-300 review-card-animate will-change-transform select-none cursor-grab active:cursor-grabbing" style="animation-delay: ${i * 100}ms;">
+                <!-- Decor Elements -->
+                <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#C8A96A]/10 to-transparent rounded-bl-full -z-0 pointer-events-none"></div>
+                <span class="material-symbols-outlined absolute top-3 right-3 text-[#C8A96A]/20 text-5xl -z-0 pointer-events-none" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+                
+                <!-- Reviewer Header -->
+                <div class="flex items-center gap-3 relative z-10 mb-4">
+                    <div class="w-11 h-11 rounded-full bg-gradient-to-br from-[#C8A96A] to-[#A0824B] text-white flex items-center justify-center font-display font-bold text-lg shadow-inner shrink-0">
+                        ${initials}
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                        <span class="font-bold text-graphite text-[16px] leading-tight truncate w-full">${r.name}</span>
+                        ${r.info ? `<span class="text-slate-400 text-[11px] truncate w-full mt-0.5">${r.info}</span>` : ''}
+                    </div>
+                </div>
+
+                <!-- Rating & Time -->
+                <div class="flex items-center flex-wrap gap-2 mb-3 relative z-10">
+                    <div class="flex items-center gap-0.5">
+                        <span class="font-bold text-graphite text-sm mr-1 leading-none pt-0.5">${r.rating}</span>
+                        ${starsHtml}
+                    </div>
+                    <span class="text-slate-400 text-[11px]">• ${r.time}</span>
+                </div>
+
+                <!-- Content -->
+                <p class="text-slate-600 text-[14px] leading-relaxed italic mb-5 relative z-10 break-words line-clamp-[7]">
+                    "${r.content}"
+                </p>
+
+                <!-- Detailed Specs -->
+                <div class="mt-auto relative z-10">
+                    ${buildDetailRow('Loại chuyến đi', r.tripType)}
+                    ${buildDetailRow('Nhóm khách', r.travelGroup)}
+                    
+                    ${r.highlights ? `
+                    <div class="mt-2 text-[12px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 italic">
+                        <span class="font-bold text-graphite not-italic">Điểm nổi bật:</span> ${r.highlights}
+                    </div>
+                    ` : ''}
+
+                    ${scoreRow}
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    section.classList.remove('hidden');
+    // Bật lên với hiệu ứng fade in
+    setTimeout(() => {
+        section.classList.remove('opacity-0');
+
+        // Thêm tính năng kéo thả cuộn ngang (drag to scroll) cho máy tính
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            slider.style.scrollBehavior = 'auto'; // Tạm tắt smooth scroll khi user mousedown
+            slider.style.scrollSnapType = 'none'; // Tắt snap khi mousedown để kéo mượt
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+        slider.addEventListener('mouseleave', () => {
+            if (!isDown) return;
+            isDown = false;
+            slider.style.scrollBehavior = 'smooth';
+            slider.style.scrollSnapType = 'x mandatory';
+        });
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.style.scrollBehavior = 'smooth';
+            slider.style.scrollSnapType = 'x mandatory';
+            // Snap về thẻ gần nhất (cần một chút timeout để thả chuột kích hoạt cuộn)
+            setTimeout(() => { slider.scrollBy({ left: 1, behavior: 'smooth' }); }, 50);
+        });
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; // Tốc độ cuộn x2
+            slider.scrollLeft = scrollLeft - walk;
+        });
+
+    }, 100);
+}
+
+// Gọi loadReview sau khi page load
+document.addEventListener('DOMContentLoaded', () => {
+    // Để gọi không ảnh hưởng tốc độ tải danh sách phòng ban đầu
+    setTimeout(loadReviews, 500);
 });
