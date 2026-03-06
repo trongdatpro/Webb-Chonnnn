@@ -406,7 +406,7 @@
             const submitBtn = document.getElementById('submit-booking');
             const submitText = document.getElementById('submit-text');
 
-            const POLICY_API = "https://script.google.com/macros/s/AKfycbwUrUUpTaAUCBZVn0QHPWd0X3XavMGMSc9Dl_vROQlafAHDVacdz6Jo_fVOkr4bCeGdIQ/exec";
+            const POLICY_API = "https://docs.google.com/spreadsheets/d/1jszKQ6uZOqk-MD0vy--9NqISDuUDau6-gyx-KO1wck4/gviz/tq?gid=1382126270";
 
             const fetchJSONP = (url) => new Promise((resolve) => {
                 const cbName = 'gvizCb_' + Date.now() + Math.floor(Math.random() * 10000);
@@ -480,31 +480,36 @@
                     isCheckingPolicy = true;
 
                     try {
-                        // Use standard fetch with cache buster to force fresh data
-                        const fetchUrl = POLICY_API + (POLICY_API.includes('?') ? '&' : '?') + 't=' + Date.now();
-                        const response = await fetch(fetchUrl).catch(() => null);
-                        const policyRes = response ? await response.json().catch(() => ({})) : {};
+                        // Use Gviz API with fetchJSONP for real-time sync
+                        const policyDataRaw = await fetchJSONP(POLICY_API + "&t=" + Date.now());
+                        let dynamicPolicy = [];
 
-                        // Bảng dữ liệu tĩnh từ ảnh bạn gửi (Làm phương án dự phòng khi API lỗi)
+                        if (policyDataRaw && policyDataRaw.table && policyDataRaw.table.rows) {
+                            dynamicPolicy = policyDataRaw.table.rows.map(row => ({
+                                Month_ID: row.c[0] ? row.c[0].v : null,
+                                Min_Days_Lead: row.c[1] ? row.c[1].v : null
+                            })).filter(p => p.Month_ID !== null);
+                        }
+
+                        // Bảng dữ liệu tĩnh từ ảnh bạn gửi (Fallback)
                         const STATIC_POLICY = {
                             1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5
                         };
 
-                        console.log("[V3.0-FIXED] Policy check started. Response:", policyRes);
+                        console.log("[V4.2-REALTIME] Policy sync started.", { dynamicPolicy });
 
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         const daysLead = Math.ceil((checkinDateObj - today) / (1000 * 60 * 60 * 24));
                         const monthId = checkinDateObj.getMonth() + 1;
 
-                        let minDaysLead = STATIC_POLICY[monthId] || 7; // Mặc định bảng tĩnh
-                        let isLastMinute = false;
+                        let minDaysLead = STATIC_POLICY[monthId] || 7;
 
-                        // Nếu API trả về dữ liệu hợp lệ (Mảng), ưu tiên lấy từ API
-                        if (Array.isArray(policyRes) && policyRes.length > 0) {
-                            const policy = policyRes.find(p => p.Month_ID === monthId);
-                            if (policy) {
-                                minDaysLead = policy.Min_Days_Lead;
+                        // Ưu tiên dữ liệu từ Sheet
+                        if (dynamicPolicy.length > 0) {
+                            const found = dynamicPolicy.find(p => p.Month_ID === monthId);
+                            if (found && found.Min_Days_Lead !== null) {
+                                minDaysLead = found.Min_Days_Lead;
                             }
                         }
 
@@ -514,11 +519,8 @@
                             monthId,
                             daysLead,
                             minDaysLeadRequired: minDaysLead,
-                            isLastMinute,
-                            apiError: policyRes.error
+                            isLastMinute
                         });
-
-                        console.log("Policy check:", { monthId, daysLead, isLastMinute, policyRes });
 
                         if (isLastMinute) {
                             console.warn("Smart Logic: Blocked 1-night stay (Too close to travel date)");

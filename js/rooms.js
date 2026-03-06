@@ -147,20 +147,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=654600068',  // T11
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=1543178625'  // T12
     ];
-    const POLICY_API = "https://script.google.com/macros/s/AKfycbwUrUUpTaAUCBZVn0QHPWd0X3XavMGMSc9Dl_vROQlafAHDVacdz6Jo_fVOkr4bCeGdIQ/exec";
+    const POLICY_API = "https://docs.google.com/spreadsheets/d/1jszKQ6uZOqk-MD0vy--9NqISDuUDau6-gyx-KO1wck4/gviz/tq?gid=1382126270";
     let dynamicPolicyData = [];
 
     try {
 
-        async function fetchPolicy(url) {
+        async function syncPolicy() {
             try {
-                // Cache buster for Policy
-                const fetchUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-                const res = await fetch(fetchUrl);
-                return await res.json();
+                const res = await fetchJSONP(POLICY_API + "&t=" + Date.now());
+                if (res && res.table && res.table.rows) {
+                    dynamicPolicyData = res.table.rows.map(row => ({
+                        Month_ID: row.c[0] ? row.c[0].v : null,
+                        Min_Days_Lead: row.c[1] ? row.c[1].v : null
+                    })).filter(p => p.Month_ID !== null);
+                    console.log("[V4.2-REALTIME] Policy synced from Sheet:", dynamicPolicyData);
+                }
             } catch (e) {
-                console.warn("Fetch Policy failed, using fallback:", e);
-                return null;
+                console.warn("Policy sync failed:", e);
             }
         }
 
@@ -175,8 +178,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const numPricing = URL_PRICINGS.length;
         const pricingResponses = allResponses.slice(0, numPricing);
         const scheduleResponses = allResponses.slice(numPricing, numPricing + URL_SCHEDULES.length);
-        dynamicPolicyData = await fetchPolicy(POLICY_API);
-        console.log("[V2.1-15DAYS] Dynamic Policy Data received:", dynamicPolicyData);
+        // Synchronize Policy first
+        await syncPolicy();
 
         // Check if AT LEAST ONE of the links succeeded for both Pricing and Schedule
         const validPricing = pricingResponses.filter(res => res && res.table);
@@ -731,7 +734,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     let minDaysLead = STATIC_POLICY[monthId] || 7;
                     let isLastMinute = false;
 
-                    console.log("[V3.0-FIXED] Modal Policy check started. Static Fallback:", minDaysLead);
+                    console.log("[V4.2-REALTIME] Modal Policy check started. Static Fallback:", minDaysLead);
 
                     if (Array.isArray(dynamicPolicyData) && dynamicPolicyData.length > 0) {
                         const policy = dynamicPolicyData.find(p => p.Month_ID === monthId);
