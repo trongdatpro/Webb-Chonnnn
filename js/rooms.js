@@ -130,6 +130,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=654600068',  // T11
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=1543178625'  // T12
     ];
+    const POLICY_API = "https://script.google.com/macros/s/AKfycbydvmA4ih-8zGNHft95O5PIizTs2YHe8QeiU4Ud3dnFJ5Kcu0gH8e4B7030kDP--yM/exec";
+    let dynamicPolicyData = [];
 
     try {
         const fetchJSONP = (url) => new Promise((resolve) => {
@@ -163,12 +165,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         const [...allResponses] = await Promise.all([
             ...pricingPromises,
-            ...schedulePromises
+            ...schedulePromises,
+            fetch(POLICY_API).then(r => r.json()).catch(() => ({}))
         ]);
 
         const numPricing = URL_PRICINGS.length;
         const pricingResponses = allResponses.slice(0, numPricing);
-        const scheduleResponses = allResponses.slice(numPricing);
+        const scheduleResponses = allResponses.slice(numPricing, numPricing + URL_SCHEDULES.length);
+        dynamicPolicyData = allResponses[allResponses.length - 1];
 
         // Check if AT LEAST ONE of the links succeeded for both Pricing and Schedule
         const validPricing = pricingResponses.filter(res => res && res.table);
@@ -262,22 +266,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             curr.setDate(curr.getDate() + 1);
         }
 
-        // Logic formatting string YYYY-MM-DD
-        const getStr = (d) => {
-            const tz = d.getTimezoneOffset() * 60000;
-            return (new Date(d - tz)).toISOString().split('T')[0];
-        };
-
-        const renderCurrency = (num) => new Intl.NumberFormat('vi-VN').format(num);
-
-        let allowedRooms = localRooms;
-        if (children > 0 && isUnder6) {
-            // Nếu khách chọn có trẻ em và dưới 6 tuổi thì chỉ hiển thị phòng xanh
-            allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
-        } else {
-            // Còn trên 6 tuổi (hoặc không có) thì dựa vào lịch phòng phòng nào còn trống thì hiển thị
-            allowedRooms = localRooms;
-        }
+        const allowedRooms = (children > 0 && isUnder6)
+            ? localRooms.filter(r => r.id === 'Green_Room')
+            : localRooms;
 
         roomsContainer.innerHTML = '';
         renderRooms(allowedRooms, scheduleData, pricingData, datesToStay);
@@ -343,6 +334,48 @@ document.addEventListener('DOMContentLoaded', async () => {
                     isAvailable = false;
                 }
             }
+
+            // 3. Smart Booking Policy for 1st night
+            if (isAvailable && datesToStay.length === 1) {
+                const checkin = datesToStay[0];
+                const checkout = new Date(checkin); checkout.setDate(checkout.getDate() + 1);
+
+                // Van 2: Last Minute
+                const today = new Date(); today.setHours(0, 0, 0, 0);
+                const daysLead = Math.ceil((checkin - today) / (1000 * 60 * 60 * 24));
+                const monthId = checkin.getMonth() + 1;
+                const DEFAULT_MIN_DAYS = 7;
+                let isLastMinute = false;
+
+                if (Array.isArray(dynamicPolicyData) && dynamicPolicyData.length > 0) {
+                    const policy = dynamicPolicyData.find(p => p.Month_ID === monthId);
+                    if (policy) {
+                        isLastMinute = daysLead <= policy.Min_Days_Lead;
+                    } else {
+                        isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                    }
+                } else {
+                    isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                }
+
+                // Van 1: Gap Filler
+                const prevDate = new Date(checkin); prevDate.setDate(prevDate.getDate() - 1);
+                const nextDate = new Date(checkout);
+                const prevStr = getStr(prevDate);
+                const nextStr = getStr(nextDate);
+                let isGap = false;
+                if (scheduleData[room.id] && scheduleData[room.id][prevStr] === 'Booked' && scheduleData[room.id][nextStr] === 'Booked') {
+                    isGap = true;
+                }
+
+                if (!isLastMinute && !isGap) {
+                    console.log(`Room ${room.id} blocked: 1-night stay, Last-minute=${isLastMinute}, Gap-filler=${isGap}`);
+                    isAvailable = false;
+                }
+            }
+
+            // Nếu phòng đã bị đặt hoặc không thỏa điều kiện 1 đêm thì bỏ qua, không in ra màn hình
+            if (!isAvailable) return;
 
             // 2. Calculate the price of the FIRST night only to establish the base rate card
             if (datesToStay.length > 0) {
@@ -411,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                    </div>
                    <button data-room-id="${room.id}" onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: room.img, totalPrice: finalPriceToPass })})' 
                        class="${isAlreadySelected ? 'bg-[#C8A96A] text-graphite pointer-events-none' : 'bg-primary text-white'} hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite font-display italic tracking-wider font-bold text-[14px] pt-0.5 pb-1 px-3 rounded shadow-lg shadow-primary/20 active:scale-95 transition-all duration-500 flex flex-col items-center justify-center leading-[1.1] shrink-0 mt-[22px] -mr-3">
-                       ${isAlreadySelected ? '<span>Đã</span><span>Thêm</span>' : '<span>Chọn</span><span>Phòng</span>'}
+                       ${isAlreadySelected ? '<span>Đã</span><span>chọn</span>' : '<span>Chọn</span><span>Phòng</span>'}
                    </button>`
                 : `<div class="flex flex-col gap-0.5 opacity-50 -ml-3">
                     <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
@@ -642,9 +675,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    const triggerModalWarningEffect = () => {
+        const warning = document.getElementById('modal-booking-warning');
+        if (!warning) return;
+        warning.classList.remove('animate-shake', 'animate-pop', 'active');
+        void warning.offsetWidth;
+        warning.classList.add('animate-shake', 'animate-pop', 'active');
+        setTimeout(() => {
+            warning.classList.remove('animate-shake', 'animate-pop');
+        }, 600);
+    };
+
     const saveBtn = document.getElementById('modal-save-btn');
     if (saveBtn) {
-        saveBtn.addEventListener('click', () => {
+        saveBtn.addEventListener('click', async () => {
             const ci = checkinInput ? checkinInput.value : '';
             const co = checkoutInput ? checkoutInput.value : '';
             const ad = adultCountLocal;
@@ -656,16 +700,65 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            const ciDate = new Date(ci);
-            const coDate = new Date(co);
-            if (ciDate >= coDate) {
-                alert("Ngày trả phòng phải sau ngày nhận phòng");
-                return;
-            }
+            const ciDate = parseLocal(ci);
+            const coDate = parseLocal(co);
+            const diffTime = Math.abs(coDate - ciDate);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if (ch > 0 && !age) {
-                alert("Vui lòng chọn độ tuổi của trẻ em");
-                return;
+            // Smart Validation for Modal
+            if (diffDays === 1) {
+                saveBtn.disabled = true;
+                // No text change to "Đang kiểm tra..." as requested
+
+                try {
+                    const today = new Date(); today.setHours(0, 0, 0, 0);
+                    const daysLead = Math.ceil((ciDate - today) / (1000 * 60 * 60 * 24));
+                    const monthId = ciDate.getMonth() + 1;
+
+                    const DEFAULT_MIN_DAYS = 7;
+                    let isLastMinute = false;
+                    if (Array.isArray(dynamicPolicyData) && dynamicPolicyData.length > 0) {
+                        const policy = dynamicPolicyData.find(p => p.Month_ID === monthId);
+                        if (policy) {
+                            isLastMinute = daysLead <= policy.Min_Days_Lead;
+                        } else {
+                            isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                        }
+                    } else {
+                        isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                    }
+
+                    let isGapPossible = false;
+                    const checkinStr = ci;
+                    const prevDate = new Date(ciDate); prevDate.setDate(prevDate.getDate() - 1);
+                    const nextDate = new Date(coDate);
+                    const prevStr = getStr(prevDate);
+                    const nextStr = getStr(nextDate);
+
+                    // scheduleData is accessible inside DOMContentLoaded
+                    for (const rId in scheduleData) {
+                        if (scheduleData[rId][prevStr] === 'Booked' && scheduleData[rId][nextStr] === 'Booked') {
+                            if (scheduleData[rId][checkinStr] !== 'Booked') {
+                                isGapPossible = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!isLastMinute && !isGapPossible) {
+                        console.warn("Modal: Blocked 1-night stay (Last-minute & Gap not found)");
+                        triggerModalWarningEffect();
+                        saveBtn.disabled = false;
+                        saveBtn.textContent = "ĐỔI NGÀY";
+                        return;
+                    }
+                } catch (e) {
+                    console.error("Modal policy check failed", e);
+                    triggerModalWarningEffect();
+                    saveBtn.disabled = false;
+                    saveBtn.textContent = "ĐỔI NGÀY";
+                    return;
+                }
             }
 
             const updatedBooking = {
@@ -673,6 +766,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 checkin: ci,
                 checkout: co,
                 adults: ad,
+                children: ch,
                 childrenAgeCategory: age
             };
 
@@ -757,7 +851,7 @@ function renderWaitlist() {
         const isSelected = selectedRooms.some(r => String(r.id) === String(roomId));
 
         if (isSelected) {
-            btn.innerHTML = '<span>Đã</span><span>Thêm</span>';
+            btn.innerHTML = '<span>Đã</span><span>chọn</span>';
             btn.classList.add('bg-[#C8A96A]', 'text-graphite', 'pointer-events-none');
             btn.classList.remove('bg-primary', 'text-white');
         } else {
@@ -844,8 +938,8 @@ window.selectRoom = function (btn, roomData) {
     const isAlreadyIn = selectedRooms.some(r => String(r.id) === String(roomData.id));
     if (isAlreadyIn) return;
 
-    // 2. Chuyển nút sang trạng thái "Đã Thêm" ngay lập tức
-    btn.innerHTML = '<span>Đã</span><span>Thêm</span>';
+    // 2. Chuyển nút sang trạng thái "Đã chọn" ngay lập tức
+    btn.innerHTML = '<span>Đã</span><span>chọn</span>';
     btn.classList.add('bg-[#C8A96A]', 'text-graphite', 'pointer-events-none');
     btn.classList.remove('bg-primary', 'text-white');
 

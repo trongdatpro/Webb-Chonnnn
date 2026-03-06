@@ -66,10 +66,63 @@
             color: #c8a96a;
             z-index: 10;
         }
-    </style>
-    <style>
+
         body {
             min-height: max(884px, 100dvh);
+        }
+
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-4px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        .animate-pop {
+            animation: pop 0.3s ease-out both;
+        }
+
+        #booking-warning.active {
+            color: #ef4444 !important;
+            /* text-red-500 */
+            display: block !important;
+            font-weight: 800;
+            transform: scale(1.05);
+            /* Slightly enlarged when active */
         }
     </style>
 </head>
@@ -207,13 +260,10 @@
 
                         <!-- Footnote & Warning (Absolute inside button area) -->
                         <div class="absolute -bottom-4 left-0 w-full pointer-events-none flex flex-col items-center">
-                            <p id="night-warning"
-                                class="hidden text-[10px] text-center font-bold italic leading-tight hover:max-w-prose"
+                            <p id="booking-warning"
+                                class="text-[10px] text-center font-bold italic leading-tight transition-all duration-300"
                                 style="color: #8B4513;">
-                                Chồn ưu tiên nhận khách từ 2 đêm. Với booking 1 đêm, vui lòng liên hệ Fanpage!
-                            </p>
-                            <p class="text-[10px] text-center font-bold italic leading-tight" style="color: #8B4513;">
-                                Chồn ưu tiên nhận khách từ 2 đêm. Với booking 1 đêm, vui lòng liên hệ Zalo.
+                                Chồn ưu tiên nhận đặt phòng từ 2 đêm. Với đặt phòng 1 đêm, vui lòng liên hệ Zalo.
                             </p>
                         </div>
                     </div>
@@ -301,7 +351,6 @@
             const checkinInput = document.getElementById('checkin-date');
             const checkoutInput = document.getElementById('checkout-date');
             const warningText = document.getElementById('night-warning');
-            const submitBtn = document.getElementById('submit-booking');
 
             // Setup dates constraint (min today)
             const today = new Date().toISOString().split('T')[0];
@@ -352,11 +401,42 @@
                 childCountSpan.textContent = childCount;
             });
 
-            // Form Submit Validation
+            const bookingWarning = document.getElementById('booking-warning');
+            const submitBtn = document.getElementById('submit-booking');
+            const submitText = document.getElementById('submit-text');
+
+            const POLICY_API = "https://script.google.com/macros/s/AKfycbydvmA4ih-8zGNHft95O5PIizTs2YHe8QeiU4Ud3dnFJ5KcuM0gH8e4B7030kDP--yM/exec";
+
+            const fetchJSONP = (url) => new Promise((resolve) => {
+                const cbName = 'gvizCb_' + Date.now() + Math.floor(Math.random() * 10000);
+                const s = document.createElement('script');
+                const timeout = setTimeout(() => {
+                    delete window[cbName];
+                    resolve(null);
+                }, 5000);
+                window[cbName] = (res) => {
+                    clearTimeout(timeout);
+                    delete window[cbName];
+                    if (s.parentNode) document.head.removeChild(s);
+                    resolve(res);
+                };
+                s.src = url + (url.includes('?') ? '&' : '?') + 'tqx=out:json;responseHandler:' + cbName;
+                document.head.appendChild(s);
+            });
+
+
+            const triggerWarningEffect = () => {
+                bookingWarning.classList.remove('animate-shake', 'animate-pop', 'active');
+                void bookingWarning.offsetWidth; // trigger reflow
+                bookingWarning.classList.add('animate-shake', 'animate-pop', 'active');
+                setTimeout(() => {
+                    bookingWarning.classList.remove('animate-shake', 'animate-pop');
+                }, 600);
+            };
+
             const form = document.querySelector('form');
             form.addEventListener('submit', async (e) => {
-                e.preventDefault(); // Prevent default submission
-                warningText.classList.add('hidden'); // Reset warning
+                e.preventDefault();
 
                 const checkinVal = checkinInput.value;
                 const checkoutVal = checkoutInput.value;
@@ -367,33 +447,79 @@
                     alert("Vui lòng điền đầy đủ thông tin (ngày và số điện thoại).");
                     return;
                 }
-
                 if (childCount > 0 && !childrenAgeVal) {
                     alert("Vui lòng chọn độ tuổi của trẻ em.");
                     return;
                 }
 
-                const checkinDateObj = new Date(checkinVal);
-                const checkout = new Date(checkoutVal);
-                const diffTime = Math.abs(checkout - checkinDateObj);
+                // Parse dates reliably in local time
+                const parseLocal = (dateStr) => {
+                    const [y, m, d] = dateStr.split('-');
+                    return new Date(y, m - 1, d);
+                };
+
+                const checkinDateObj = parseLocal(checkinVal);
+                const checkoutDateObj = parseLocal(checkoutVal);
+                const diffTime = checkoutDateObj - checkinDateObj;
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-                let allowed = false;
+                if (diffDays <= 0) {
+                    alert("Ngày trả phòng phải sau ngày nhận phòng.");
+                    return;
+                }
 
                 if (diffDays === 1) {
-                    alert('Chồn ưu tiên nhận khách từ 2 đêm. Với booking 1 đêm, vui lòng liên hệ Fanpage!');
-                    warningText.classList.remove('hidden');
-                    return;
-                } else if (diffDays >= 2) {
-                    allowed = true;
+                    // Start Smart Validation
+                    submitBtn.disabled = true;
+                    // No text change to "Đang kiểm tra..." as requested
+
+                    try {
+                        // Use JSONP if possible, or fetch. 
+                        // Note: script.google.com/macros/s/... usually needs fetch to handle redirect 
+                        // unless specifically written as a JSONP handler.
+                        // However, let's try a more robust fetch first then fallback
+                        const policyRes = await fetch(POLICY_API).then(r => r.json()).catch(() => ({}));
+
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        const daysLead = Math.ceil((checkinDateObj - today) / (1000 * 60 * 60 * 24));
+                        const monthId = checkinDateObj.getMonth() + 1;
+
+                        // Only Last-minute logic here
+                        const DEFAULT_MIN_DAYS = 7; // Updated to 7 days based on user feedback for March (Low Season)
+                        let isLastMinute = false;
+
+                        if (Array.isArray(policyRes) && policyRes.length > 0) {
+                            const policy = policyRes.find(p => p.Month_ID === monthId);
+                            if (policy) {
+                                isLastMinute = daysLead <= policy.Min_Days_Lead;
+                            } else {
+                                isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                            }
+                        } else {
+                            // If API fails or returns error, allow if within 3 days (Last-minute safety)
+                            isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                        }
+
+                        console.log("Policy check:", { monthId, daysLead, isLastMinute, policyRes });
+
+                        if (!isLastMinute) {
+                            console.warn("Smart Logic: Blocked 1-night stay (Last-minute not met)");
+                            triggerWarningEffect();
+                            submitBtn.disabled = false;
+                            submitText.textContent = "Xem phòng trống";
+                            return;
+                        }
+                    } catch (err) {
+                        console.error("Policy check failed", err);
+                        triggerWarningEffect();
+                        submitBtn.disabled = false;
+                        submitText.textContent = "Xem phòng trống";
+                        return;
+                    }
                 }
 
-                if (!allowed) {
-                    warningText.classList.remove('hidden');
-                    return;
-                }
-
-                // If allowed, save to sessionStorage and redirect
+                // If allowed (diffDays >= 2 OR Smart Check passed)
                 const bookingData = {
                     checkin: checkinVal,
                     checkout: checkoutVal,

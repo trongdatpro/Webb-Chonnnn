@@ -99,6 +99,58 @@
             animation: slideUpElastic 1s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
+        @keyframes shake {
+
+            0%,
+            100% {
+                transform: translateX(0);
+            }
+
+            10%,
+            30%,
+            50%,
+            70%,
+            90% {
+                transform: translateX(-4px);
+            }
+
+            20%,
+            40%,
+            60%,
+            80% {
+                transform: translateX(4px);
+            }
+        }
+
+        @keyframes pop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .animate-shake {
+            animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
+        }
+
+        .animate-pop {
+            animation: pop 0.3s ease-out both;
+        }
+
+        #modal-booking-warning.active {
+            color: #ef4444 !important;
+            display: block !important;
+            font-weight: 800;
+            transform: scale(1.05);
+        }
+
         /* Review Card specific elastic animation */
         @keyframes reviewPop {
             0% {
@@ -411,11 +463,19 @@
                     </div>
                 </div>
 
-                <div class="w-full mt-8 pt-2">
+                <div class="w-full mt-8 pt-2 relative pb-6">
                     <button id="modal-save-btn"
-                        class="w-full bg-[#c8a96a] hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-[#FFFFF5] font-header uppercase tracking-widest py-4 transition-all duration-500 text-sm shadow-lg flex items-center justify-center cursor-pointer border-none outline-none">
+                        class="w-full bg-[#c8a96a] hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-[#FFFFF5] font-header uppercase tracking-widest py-4 transition-all duration-500 text-sm shadow-lg flex items-center justify-center cursor-pointer border-none outline-none relative z-10">
                         ĐỔI NGÀY
                     </button>
+                    <!-- Warning -->
+                    <div class="absolute -bottom-2 left-0 w-full pointer-events-none flex flex-col items-center">
+                        <p id="modal-booking-warning"
+                            class="text-[10px] text-center font-bold italic leading-tight transition-all duration-300"
+                            style="color: #8B4513;">
+                            Chồn ưu tiên nhận đặt phòng từ 2 đêm. Với đặt phòng 1 đêm, vui lòng liên hệ Zalo.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
