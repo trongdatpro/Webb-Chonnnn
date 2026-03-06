@@ -100,11 +100,11 @@
             }
 
             50% {
-                transform: scale(1.05);
+                transform: scale(1.1);
             }
 
             100% {
-                transform: scale(1);
+                transform: scale(1.05);
             }
         }
 
@@ -388,6 +388,7 @@
             const plusChild = document.getElementById('plus-child');
             const childCountSpan = document.getElementById('child-count');
             let childCount = 0;
+            let isCheckingPolicy = false; // New flag instead of disabling button
 
             minusChild.addEventListener('click', () => {
                 if (childCount > 0) {
@@ -405,7 +406,7 @@
             const submitBtn = document.getElementById('submit-booking');
             const submitText = document.getElementById('submit-text');
 
-            const POLICY_API = "https://script.google.com/macros/s/AKfycbydvmA4ih-8zGNHft95O5PIizTs2YHe8QeiU4Ud3dnFJ5KcuM0gH8e4B7030kDP--yM/exec";
+            const POLICY_API = "https://script.google.com/macros/s/AKfycbwUrUUpTaAUCBZVn0QHPWd0X3XavMGMSc9Dl_vROQlafAHDVacdz6Jo_fVOkr4bCeGdIQ/exec";
 
             const fetchJSONP = (url) => new Promise((resolve) => {
                 const cbName = 'gvizCb_' + Date.now() + Math.floor(Math.random() * 10000);
@@ -426,12 +427,12 @@
 
 
             const triggerWarningEffect = () => {
-                bookingWarning.classList.remove('animate-shake', 'animate-pop', 'active');
+                // Ensure it stays red and scaled if already failed
+                bookingWarning.classList.add('active');
+                // Restart animations by removing and forcing reflow
+                bookingWarning.classList.remove('animate-shake', 'animate-pop');
                 void bookingWarning.offsetWidth; // trigger reflow
-                bookingWarning.classList.add('animate-shake', 'animate-pop', 'active');
-                setTimeout(() => {
-                    bookingWarning.classList.remove('animate-shake', 'animate-pop');
-                }, 600);
+                bookingWarning.classList.add('animate-shake', 'animate-pop');
             };
 
             const form = document.querySelector('form');
@@ -470,52 +471,70 @@
 
                 if (diffDays === 1) {
                     // Start Smart Validation
-                    submitBtn.disabled = true;
-                    // No text change to "Đang kiểm tra..." as requested
+                    // If already checking, just trigger animation and return
+                    if (isCheckingPolicy) {
+                        triggerWarningEffect();
+                        return;
+                    }
+
+                    isCheckingPolicy = true;
 
                     try {
-                        // Use JSONP if possible, or fetch. 
-                        // Note: script.google.com/macros/s/... usually needs fetch to handle redirect 
-                        // unless specifically written as a JSONP handler.
-                        // However, let's try a more robust fetch first then fallback
-                        const policyRes = await fetch(POLICY_API).then(r => r.json()).catch(() => ({}));
+                        // Use standard fetch with cache buster to force fresh data
+                        const fetchUrl = POLICY_API + (POLICY_API.includes('?') ? '&' : '?') + 't=' + Date.now();
+                        const response = await fetch(fetchUrl).catch(() => null);
+                        const policyRes = response ? await response.json().catch(() => ({})) : {};
+
+                        // Bảng dữ liệu tĩnh từ ảnh bạn gửi (Làm phương án dự phòng khi API lỗi)
+                        const STATIC_POLICY = {
+                            1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5
+                        };
+
+                        console.log("[V3.0-FIXED] Policy check started. Response:", policyRes);
 
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
                         const daysLead = Math.ceil((checkinDateObj - today) / (1000 * 60 * 60 * 24));
                         const monthId = checkinDateObj.getMonth() + 1;
 
-                        // Only Last-minute logic here
-                        const DEFAULT_MIN_DAYS = 7; // Updated to 7 days based on user feedback for March (Low Season)
+                        let minDaysLead = STATIC_POLICY[monthId] || 7; // Mặc định bảng tĩnh
                         let isLastMinute = false;
 
+                        // Nếu API trả về dữ liệu hợp lệ (Mảng), ưu tiên lấy từ API
                         if (Array.isArray(policyRes) && policyRes.length > 0) {
                             const policy = policyRes.find(p => p.Month_ID === monthId);
                             if (policy) {
-                                isLastMinute = daysLead <= policy.Min_Days_Lead;
-                            } else {
-                                isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                                minDaysLead = policy.Min_Days_Lead;
                             }
-                        } else {
-                            // If API fails or returns error, allow if within 3 days (Last-minute safety)
-                            isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
                         }
+
+                        isLastMinute = daysLead <= minDaysLead;
+
+                        console.log("Policy check details:", {
+                            monthId,
+                            daysLead,
+                            minDaysLeadRequired: minDaysLead,
+                            isLastMinute,
+                            apiError: policyRes.error
+                        });
 
                         console.log("Policy check:", { monthId, daysLead, isLastMinute, policyRes });
 
-                        if (!isLastMinute) {
-                            console.warn("Smart Logic: Blocked 1-night stay (Last-minute not met)");
+                        if (isLastMinute) {
+                            console.warn("Smart Logic: Blocked 1-night stay (Too close to travel date)");
                             triggerWarningEffect();
-                            submitBtn.disabled = false;
-                            submitText.textContent = "Xem phòng trống";
+                            isCheckingPolicy = false;
                             return;
                         }
                     } catch (err) {
                         console.error("Policy check failed", err);
                         triggerWarningEffect();
-                        submitBtn.disabled = false;
-                        submitText.textContent = "Xem phòng trống";
+                        isCheckingPolicy = false;
                         return;
+                    } finally {
+                        // In case of success (isLastMinute is true), we don't necessarily reset isCheckingPolicy 
+                        // because we are navigating away. But for safety:
+                        // isCheckingPolicy = false; 
                     }
                 }
 

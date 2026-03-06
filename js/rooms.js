@@ -1,3 +1,20 @@
+const fetchJSONP = (url) => new Promise((resolve) => {
+    const cbName = 'gvizCb_' + Date.now() + Math.floor(Math.random() * 10000);
+    const s = document.createElement('script');
+    const timeout = setTimeout(() => {
+        delete window[cbName];
+        resolve(null);
+    }, 5000);
+    window[cbName] = (res) => {
+        clearTimeout(timeout);
+        delete window[cbName];
+        if (s.parentNode) document.head.removeChild(s);
+        resolve(res);
+    };
+    s.src = url + (url.includes('?') ? '&' : '?') + 'tqx=out:json;responseHandler:' + cbName;
+    document.head.appendChild(s);
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
     // Mini UI Logger
     const debugEl = document.getElementById('debug-console');
@@ -130,49 +147,36 @@ document.addEventListener('DOMContentLoaded', async () => {
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=654600068',  // T11
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=1543178625'  // T12
     ];
-    const POLICY_API = "https://script.google.com/macros/s/AKfycbydvmA4ih-8zGNHft95O5PIizTs2YHe8QeiU4Ud3dnFJ5Kcu0gH8e4B7030kDP--yM/exec";
+    const POLICY_API = "https://script.google.com/macros/s/AKfycbwUrUUpTaAUCBZVn0QHPWd0X3XavMGMSc9Dl_vROQlafAHDVacdz6Jo_fVOkr4bCeGdIQ/exec";
     let dynamicPolicyData = [];
 
     try {
-        const fetchJSONP = (url) => new Promise((resolve) => {
-            const cbName = 'gvizCb_' + Date.now() + Math.floor(Math.random() * 10000);
 
-            const timeout = setTimeout(() => {
-                delete window[cbName];
-                console.warn("Timeout fetching Google Sheet: ", url);
-                resolve(null); // Resolve with null instead of aborting everything
-            }, 7000); // 7 seconds timeout
-
-            window[cbName] = (res) => {
-                clearTimeout(timeout);
-                delete window[cbName];
-                if (s.parentNode) document.head.removeChild(s);
-                resolve(res);
-            };
-
-            const s = document.createElement('script');
-            s.src = url + '&tqx=out:json;responseHandler:' + cbName;
-            s.onerror = () => {
-                clearTimeout(timeout);
-                console.warn("Error loading Google Sheet script: ", url);
-                resolve(null);
-            };
-            document.head.appendChild(s);
-        });
+        async function fetchPolicy(url) {
+            try {
+                // Cache buster for Policy
+                const fetchUrl = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+                const res = await fetch(fetchUrl);
+                return await res.json();
+            } catch (e) {
+                console.warn("Fetch Policy failed, using fallback:", e);
+                return null;
+            }
+        }
 
         const pricingPromises = URL_PRICINGS.map(url => fetchJSONP(url));
         const schedulePromises = URL_SCHEDULES.map(url => fetchJSONP(url));
 
-        const [...allResponses] = await Promise.all([
+        const allResponses = await Promise.all([
             ...pricingPromises,
-            ...schedulePromises,
-            fetch(POLICY_API).then(r => r.json()).catch(() => ({}))
+            ...schedulePromises
         ]);
 
         const numPricing = URL_PRICINGS.length;
         const pricingResponses = allResponses.slice(0, numPricing);
         const scheduleResponses = allResponses.slice(numPricing, numPricing + URL_SCHEDULES.length);
-        dynamicPolicyData = allResponses[allResponses.length - 1];
+        dynamicPolicyData = await fetchPolicy(POLICY_API);
+        console.log("[V2.1-15DAYS] Dynamic Policy Data received:", dynamicPolicyData);
 
         // Check if AT LEAST ONE of the links succeeded for both Pricing and Schedule
         const validPricing = pricingResponses.filter(res => res && res.table);
@@ -186,7 +190,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Pricing JSONs received", pricingResponses);
         console.log("Schedule JSONs received", scheduleResponses);
 
-        const scheduleData = {};
+        let scheduleData = {};
+        let isCheckingPolicy = false; // New flag for modal responsiveness
         const pricingData = {}; // Format: { "2026-03": { "Pink_Room": { weekday: 700k, weekend: 800k } } }
 
         scheduleResponses.forEach((scheduleRes, index) => {
@@ -344,19 +349,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const today = new Date(); today.setHours(0, 0, 0, 0);
                 const daysLead = Math.ceil((checkin - today) / (1000 * 60 * 60 * 24));
                 const monthId = checkin.getMonth() + 1;
-                const DEFAULT_MIN_DAYS = 7;
+                const STATIC_POLICY = {
+                    1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5
+                };
+                let minDaysLead = STATIC_POLICY[monthId] || 7;
                 let isLastMinute = false;
 
                 if (Array.isArray(dynamicPolicyData) && dynamicPolicyData.length > 0) {
                     const policy = dynamicPolicyData.find(p => p.Month_ID === monthId);
                     if (policy) {
-                        isLastMinute = daysLead <= policy.Min_Days_Lead;
-                    } else {
-                        isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                        minDaysLead = policy.Min_Days_Lead;
                     }
-                } else {
-                    isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
                 }
+                isLastMinute = daysLead <= minDaysLead;
 
                 // Van 1: Gap Filler
                 const prevDate = new Date(checkin); prevDate.setDate(prevDate.getDate() - 1);
@@ -368,8 +373,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     isGap = true;
                 }
 
-                if (!isLastMinute && !isGap) {
-                    console.log(`Room ${room.id} blocked: 1-night stay, Last-minute=${isLastMinute}, Gap-filler=${isGap}`);
+                if (isLastMinute && !isGap) {
+                    console.log(`Room ${room.id} blocked: 1-night stay is too late (Last-minute=${isLastMinute}, Gap-filler=${isGap})`);
                     isAvailable = false;
                 }
             }
@@ -678,12 +683,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     const triggerModalWarningEffect = () => {
         const warning = document.getElementById('modal-booking-warning');
         if (!warning) return;
-        warning.classList.remove('animate-shake', 'animate-pop', 'active');
+        // Keep active (red/scale) and restart animations via reflow
+        warning.classList.add('active');
+        warning.classList.remove('animate-shake', 'animate-pop');
         void warning.offsetWidth;
-        warning.classList.add('animate-shake', 'animate-pop', 'active');
-        setTimeout(() => {
-            warning.classList.remove('animate-shake', 'animate-pop');
-        }, 600);
+        warning.classList.add('animate-shake', 'animate-pop');
     };
 
     const saveBtn = document.getElementById('modal-save-btn');
@@ -707,7 +711,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Smart Validation for Modal
             if (diffDays === 1) {
-                saveBtn.disabled = true;
+                // Prevent duplicate fetches but keep it snappy for animations
+                if (isCheckingPolicy) {
+                    triggerModalWarningEffect();
+                    return;
+                }
+
+                isCheckingPolicy = true;
                 // No text change to "Đang kiểm tra..." as requested
 
                 try {
@@ -715,49 +725,54 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const daysLead = Math.ceil((ciDate - today) / (1000 * 60 * 60 * 24));
                     const monthId = ciDate.getMonth() + 1;
 
-                    const DEFAULT_MIN_DAYS = 7;
+                    const STATIC_POLICY = {
+                        1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5
+                    };
+                    let minDaysLead = STATIC_POLICY[monthId] || 7;
                     let isLastMinute = false;
+
+                    console.log("[V3.0-FIXED] Modal Policy check started. Static Fallback:", minDaysLead);
+
                     if (Array.isArray(dynamicPolicyData) && dynamicPolicyData.length > 0) {
                         const policy = dynamicPolicyData.find(p => p.Month_ID === monthId);
                         if (policy) {
-                            isLastMinute = daysLead <= policy.Min_Days_Lead;
-                        } else {
-                            isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
+                            minDaysLead = policy.Min_Days_Lead;
                         }
-                    } else {
-                        isLastMinute = daysLead <= DEFAULT_MIN_DAYS;
                     }
+                    isLastMinute = daysLead <= minDaysLead;
 
-                    let isGapPossible = false;
-                    const checkinStr = ci;
-                    const prevDate = new Date(ciDate); prevDate.setDate(prevDate.getDate() - 1);
-                    const nextDate = new Date(coDate);
-                    const prevStr = getStr(prevDate);
-                    const nextStr = getStr(nextDate);
+                    if (isLastMinute) {
+                        let isGapPossible = false;
+                        const checkinStr = ci;
+                        const prevDate = new Date(ciDate); prevDate.setDate(prevDate.getDate() - 1);
+                        const nextDate = new Date(coDate);
+                        const prevStr = getStr(prevDate);
+                        const nextStr = getStr(nextDate);
 
-                    // scheduleData is accessible inside DOMContentLoaded
-                    for (const rId in scheduleData) {
-                        if (scheduleData[rId][prevStr] === 'Booked' && scheduleData[rId][nextStr] === 'Booked') {
-                            if (scheduleData[rId][checkinStr] !== 'Booked') {
-                                isGapPossible = true;
-                                break;
+                        // scheduleData is accessible inside DOMContentLoaded
+                        for (const rId in scheduleData) {
+                            if (scheduleData[rId][prevStr] === 'Booked' && scheduleData[rId][nextStr] === 'Booked') {
+                                if (scheduleData[rId][checkinStr] !== 'Booked') {
+                                    isGapPossible = true;
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                    if (!isLastMinute && !isGapPossible) {
-                        console.warn("Modal: Blocked 1-night stay (Last-minute & Gap not found)");
-                        triggerModalWarningEffect();
-                        saveBtn.disabled = false;
-                        saveBtn.textContent = "ĐỔI NGÀY";
-                        return;
+                        if (!isGapPossible) {
+                            console.warn("Modal: Blocked 1-night stay (Too close & Not a gap filler)");
+                            triggerModalWarningEffect();
+                            isCheckingPolicy = false;
+                            return;
+                        }
                     }
                 } catch (e) {
                     console.error("Modal policy check failed", e);
                     triggerModalWarningEffect();
-                    saveBtn.disabled = false;
-                    saveBtn.textContent = "ĐỔI NGÀY";
+                    isCheckingPolicy = false;
                     return;
+                } finally {
+                    isCheckingPolicy = false;
                 }
             }
 
