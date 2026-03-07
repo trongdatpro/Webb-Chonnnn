@@ -149,6 +149,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ];
     const POLICY_API = "https://docs.google.com/spreadsheets/d/1jszKQ6uZOqk-MD0vy--9NqISDuUDau6-gyx-KO1wck4/gviz/tq?gid=1382126270";
     let dynamicPolicyData = [];
+    let isCheckingPolicy = false;
 
     try {
 
@@ -160,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         Month_ID: row.c[0] ? row.c[0].v : null,
                         Min_Days_Lead: row.c[1] ? row.c[1].v : null
                     })).filter(p => p.Month_ID !== null);
-                    console.log("[V4.2-REALTIME] Policy synced from Sheet:", dynamicPolicyData);
+                    console.log("[V4.4-REALTIME] Policy synced from Sheet:", dynamicPolicyData);
                 }
             } catch (e) {
                 console.warn("Policy sync failed:", e);
@@ -194,7 +195,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         console.log("Schedule JSONs received", scheduleResponses);
 
         let scheduleData = {};
-        let isCheckingPolicy = false; // New flag for modal responsiveness
         const pricingData = {}; // Format: { "2026-03": { "Pink_Room": { weekday: 700k, weekend: 800k } } }
 
         scheduleResponses.forEach((scheduleRes, index) => {
@@ -359,9 +359,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 let isLastMinute = false;
 
                 if (Array.isArray(dynamicPolicyData) && dynamicPolicyData.length > 0) {
-                    const policy = dynamicPolicyData.find(p => p.Month_ID === monthId);
+                    const policy = dynamicPolicyData.find(p => Number(p.Month_ID) === monthId);
                     if (policy) {
-                        minDaysLead = policy.Min_Days_Lead;
+                        minDaysLead = Number(policy.Min_Days_Lead);
                     }
                 }
                 isLastMinute = daysLead <= minDaysLead;
@@ -376,8 +376,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                     isGap = true;
                 }
 
-                if (isLastMinute && !isGap) {
-                    console.log(`Room ${room.id} blocked: 1-night stay is too late (Last-minute=${isLastMinute}, Gap-filler=${isGap})`);
+                // New Logic: 1 night is ALLOWED if:
+                // 1. It is within the 'minDaysLead' window from today (proximal).
+                // 2. OR it is a Gap Filler.
+                const isWithinAllowedWindow = daysLead <= minDaysLead;
+
+                if (!isWithinAllowedWindow && !isGap) {
+                    console.log(`Room ${room.id} blocked: Distal 1-night stay is reserved for 2+ nights (Lead=${daysLead}, Limit=${minDaysLead}, Gap=${isGap})`);
                     isAvailable = false;
                 }
             }
@@ -576,13 +581,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         checkinInput.addEventListener('change', () => {
             if (checkinInput.value) {
                 const ciDate = new Date(checkinInput.value);
-                const nextDay = new Date(ciDate);
-                nextDay.setDate(nextDay.getDate() + 1);
-                checkoutInput.min = nextDay.toISOString().split('T')[0];
 
-                if (checkoutInput.value && new Date(checkoutInput.value) <= ciDate) {
-                    checkoutInput.value = nextDay.toISOString().split('T')[0];
-                }
+                // Min checkout is 1 day after
+                const minCoDate = new Date(ciDate);
+                minCoDate.setDate(minCoDate.getDate() + 1);
+                checkoutInput.min = minCoDate.toISOString().split('T')[0];
+
+                // Propose 2 days stay
+                const proposedCoDate = new Date(ciDate);
+                proposedCoDate.setDate(proposedCoDate.getDate() + 2);
+                checkoutInput.value = proposedCoDate.toISOString().split('T')[0];
             }
         });
     }
@@ -714,14 +722,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Smart Validation for Modal
             if (diffDays === 1) {
-                // Prevent duplicate fetches but keep it snappy for animations
                 if (isCheckingPolicy) {
                     triggerModalWarningEffect();
                     return;
                 }
 
                 isCheckingPolicy = true;
-                // No text change to "Đang kiểm tra..." as requested
 
                 try {
                     const today = new Date(); today.setHours(0, 0, 0, 0);
@@ -732,48 +738,31 @@ document.addEventListener('DOMContentLoaded', async () => {
                         1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5
                     };
                     let minDaysLead = STATIC_POLICY[monthId] || 7;
-                    let isLastMinute = false;
 
-                    console.log("[V4.2-REALTIME] Modal Policy check started. Static Fallback:", minDaysLead);
+                    console.log("[V4.4-REALTIME] Modal Policy check started.", { monthId, daysLead });
 
                     if (Array.isArray(dynamicPolicyData) && dynamicPolicyData.length > 0) {
-                        const policy = dynamicPolicyData.find(p => p.Month_ID === monthId);
+                        const policy = dynamicPolicyData.find(p => Number(p.Month_ID) === monthId);
                         if (policy) {
-                            minDaysLead = policy.Min_Days_Lead;
+                            minDaysLead = Number(policy.Min_Days_Lead);
+                            console.log("[V4.4] Using lead days from Sheet:", minDaysLead);
                         }
                     }
-                    isLastMinute = daysLead <= minDaysLead;
 
-                    if (isLastMinute) {
-                        let isGapPossible = false;
-                        const checkinStr = ci;
-                        const prevDate = new Date(ciDate); prevDate.setDate(prevDate.getDate() - 1);
-                        const nextDate = new Date(coDate);
-                        const prevStr = getStr(prevDate);
-                        const nextStr = getStr(nextDate);
+                    // Logic: Allow if within proximal window (daysLead <= minDaysLead)
+                    const isWithinAllowedWindow = daysLead <= minDaysLead;
 
-                        // scheduleData is accessible inside DOMContentLoaded
-                        for (const rId in scheduleData) {
-                            if (scheduleData[rId][prevStr] === 'Booked' && scheduleData[rId][nextStr] === 'Booked') {
-                                if (scheduleData[rId][checkinStr] !== 'Booked') {
-                                    isGapPossible = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (!isGapPossible) {
-                            console.warn("Modal: Blocked 1-night stay (Too close & Not a gap filler)");
-                            triggerModalWarningEffect();
-                            isCheckingPolicy = false;
-                            return;
-                        }
+                    if (!isWithinAllowedWindow) {
+                        console.warn("Smart Logic: Blocked distal 1-night stay (Save for 2+ nights)");
+                        triggerModalWarningEffect();
+                        isCheckingPolicy = false;
+                        return;
                     }
+
+                    isCheckingPolicy = false;
                 } catch (e) {
                     console.error("Modal policy check failed", e);
-                    triggerModalWarningEffect();
                     isCheckingPolicy = false;
-                    return;
                 } finally {
                     isCheckingPolicy = false;
                 }
@@ -891,16 +880,16 @@ function renderWaitlist() {
     if (contactContainer) contactContainer.style.bottom = '240px'; // Higher to avoid all overlaps
 
     container.innerHTML = selectedRooms.map((room, index) => `
-        <div id="waitlist-item-${room.id}" class="relative group/item shrink-0 transition-opacity duration-300">
-            <div class="w-12 h-12 rounded-lg overflow-hidden border-2 border-primary shadow-sm bg-white">
-                <img src="${room.img}" class="w-full h-full object-cover">
-            </div>
-            <!-- Nút X để xóa phòng -->
-            <button onclick="removeFromWaitlist(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full size-5 flex items-center justify-center shadow-md active:scale-90 transition-transform z-10">
-                <span class="material-symbols-outlined text-[12px] font-bold">close</span>
-            </button>
-        </div>
-    `).join('');
+<div id="waitlist-item-${room.id}" class="relative group/item shrink-0 transition-opacity duration-300">
+<div class="w-12 h-12 rounded-lg overflow-hidden border-2 border-primary shadow-sm bg-white">
+<img src="${room.img}" class="w-full h-full object-cover">
+</div>
+<!-- Nút X để xóa phòng -->
+<button onclick="removeFromWaitlist(${index})" class="absolute -top-1.5 -right-1.5 bg-red-500 text-white rounded-full size-5 flex items-center justify-center shadow-md active:scale-90 transition-transform z-10">
+<span class="material-symbols-outlined text-[12px] font-bold">close</span>
+</button>
+</div>
+`).join('');
 }
 
 // Hàm xóa phòng khỏi danh sách
@@ -1111,73 +1100,73 @@ function renderReviews(reviews) {
         const buildDetailRow = (label, val) => {
             if (!val) return '';
             return `<div class="flex justify-between items-center text-[12px] border-b border-primary/10 pb-1 mb-1.5">
-                        <span class="text-slate-500 font-bold">${label}:</span>
-                        <span class="text-graphite font-medium text-right max-w-[60%] sm:max-w-[70%]">${val}</span>
-                    </div>`;
+    <span class="text-slate-500 font-bold">${label}:</span>
+    <span class="text-graphite font-medium text-right max-w-[60%] sm:max-w-[70%]">${val}</span>
+</div>`;
         };
         const buildScoreItem = (label, val) => {
             if (!val) return '';
             return `<div class="flex flex-col items-center">
-                        <span class="text-slate-500 font-bold text-[10px] uppercase">${label}</span>
-                        <span class="text-graphite font-bold text-[13px]">${val}</span>
-                    </div>`;
+    <span class="text-slate-500 font-bold text-[10px] uppercase">${label}</span>
+    <span class="text-graphite font-bold text-[13px]">${val}</span>
+</div>`;
         };
 
         const hasScores = r.roomScore || r.serviceScore || r.locationScore;
         const scoreRow = hasScores ? `
-            <div class="flex justify-around items-center bg-[#FAF6EC] p-2 rounded-md mt-3 border border-primary/20">
-                ${buildScoreItem('Phòng', r.roomScore)}
-                ${buildScoreItem('Dịch vụ', r.serviceScore)}
-                ${buildScoreItem('Vị trí', r.locationScore)}
-            </div>
-        ` : '';
+<div class="flex justify-around items-center bg-[#FAF6EC] p-2 rounded-md mt-3 border border-primary/20">
+${buildScoreItem('Phòng', r.roomScore)}
+${buildScoreItem('Dịch vụ', r.serviceScore)}
+${buildScoreItem('Vị trí', r.locationScore)}
+</div>
+` : '';
 
         return `
-            <div class="snap-start shrink-0 w-[85vw] sm:w-[350px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-[#C8A96A]/20 p-5 flex flex-col relative overflow-hidden active:scale-[0.98] transition-all duration-300 review-card-animate will-change-transform select-none cursor-grab active:cursor-grabbing" style="animation-delay: ${i * 100}ms;">
-                <!-- Decor Elements -->
-                <div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#C8A96A]/10 to-transparent rounded-bl-full -z-0 pointer-events-none"></div>
-                <span class="material-symbols-outlined absolute top-3 right-3 text-[#C8A96A]/20 text-5xl -z-0 pointer-events-none" style="font-variation-settings: 'FILL' 1;">format_quote</span>
-                
-                <!-- Reviewer Header -->
-                <div class="flex items-center gap-3 relative z-10 mb-4">
-                    <div class="w-11 h-11 rounded-full bg-gradient-to-br from-[#C8A96A] to-[#A0824B] text-white flex items-center justify-center font-display font-bold text-lg shadow-inner shrink-0">
-                        ${initials}
-                    </div>
-                    <div class="flex flex-col min-w-0">
-                        <span class="font-bold text-graphite text-[16px] leading-tight truncate w-full">${r.name}</span>
-                        ${r.info ? `<span class="text-slate-400 text-[11px] truncate w-full mt-0.5">${r.info}</span>` : ''}
-                    </div>
-                </div>
+<div class="snap-start shrink-0 w-[85vw] sm:w-[350px] bg-white rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.06)] border border-[#C8A96A]/20 p-5 flex flex-col relative overflow-hidden active:scale-[0.98] transition-all duration-300 review-card-animate will-change-transform select-none cursor-grab active:cursor-grabbing" style="animation-delay: ${i * 100}ms;">
+<!-- Decor Elements -->
+<div class="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-[#C8A96A]/10 to-transparent rounded-bl-full -z-0 pointer-events-none"></div>
+<span class="material-symbols-outlined absolute top-3 right-3 text-[#C8A96A]/20 text-5xl -z-0 pointer-events-none" style="font-variation-settings: 'FILL' 1;">format_quote</span>
+ 
+<!-- Reviewer Header -->
+<div class="flex items-center gap-3 relative z-10 mb-4">
+<div class="w-11 h-11 rounded-full bg-gradient-to-br from-[#C8A96A] to-[#A0824B] text-white flex items-center justify-center font-display font-bold text-lg shadow-inner shrink-0">
+    ${initials}
+</div>
+<div class="flex flex-col min-w-0">
+    <span class="font-bold text-graphite text-[16px] leading-tight truncate w-full">${r.name}</span>
+    ${r.info ? `<span class="text-slate-400 text-[11px] truncate w-full mt-0.5">${r.info}</span>` : ''}
+</div>
+</div>
 
-                <!-- Rating & Time -->
-                <div class="flex items-center flex-wrap gap-2 mb-3 relative z-10">
-                    <div class="flex items-center gap-0.5">
-                        <span class="font-bold text-graphite text-sm mr-1 leading-none pt-0.5">${r.rating}</span>
-                        ${starsHtml}
-                    </div>
-                    <span class="text-slate-400 text-[11px]">• ${r.time}</span>
-                </div>
+<!-- Rating & Time -->
+<div class="flex items-center flex-wrap gap-2 mb-3 relative z-10">
+<div class="flex items-center gap-0.5">
+    <span class="font-bold text-graphite text-sm mr-1 leading-none pt-0.5">${r.rating}</span>
+    ${starsHtml}
+</div>
+<span class="text-slate-400 text-[11px]">• ${r.time}</span>
+</div>
 
-                <!-- Content -->
-                <p class="text-slate-600 text-[14px] leading-relaxed italic mb-5 relative z-10 break-words line-clamp-[7]">
-                    "${r.content}"
-                </p>
+<!-- Content -->
+<p class="text-slate-600 text-[14px] leading-relaxed italic mb-5 relative z-10 break-words line-clamp-[7]">
+"${r.content}"
+</p>
 
-                <!-- Detailed Specs -->
-                <div class="mt-auto relative z-10">
-                    ${buildDetailRow('Loại chuyến đi', r.tripType)}
-                    ${buildDetailRow('Nhóm khách', r.travelGroup)}
-                    
-                    ${r.highlights ? `
-                    <div class="mt-2 text-[12px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 italic">
-                        <span class="font-bold text-graphite not-italic">Điểm nổi bật:</span> ${r.highlights}
-                    </div>
-                    ` : ''}
+<!-- Detailed Specs -->
+<div class="mt-auto relative z-10">
+${buildDetailRow('Loại chuyến đi', r.tripType)}
+${buildDetailRow('Nhóm khách', r.travelGroup)}
+ 
+${r.highlights ? `
+<div class="mt-2 text-[12px] text-slate-500 bg-slate-50 p-2 rounded border border-slate-100 italic">
+    <span class="font-bold text-graphite not-italic">Điểm nổi bật:</span> ${r.highlights}
+</div>
+` : ''}
 
-                    ${scoreRow}
-                </div>
-            </div>
-        `;
+${scoreRow}
+</div>
+</div>
+`;
     }).join('');
 
     section.classList.remove('hidden');

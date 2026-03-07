@@ -139,7 +139,7 @@
         </div>
         <!-- Main Invitation Card -->
         <div class="relative z-20 w-full max-w-md bg-ivory shadow-2xl rounded-sm p-1">
-            <div class="rococo-border bg-ivory p-8 pb-6 flex flex-col items-center">
+            <div class="rococo-border bg-ivory p-8 pb-16 flex flex-col items-center">
                 <!-- Acanthus Leaf Corners -->
                 <div class="corner-leaf top-0 left-0">
                     <svg fill="currentColor" viewbox="0 0 100 100">
@@ -162,7 +162,7 @@
                     </svg>
                 </div>
                 <!-- Header Content -->
-                <div class="text-center mb-8">
+                <div class="text-center mb-3">
                     <h1 class="font-display text-graphite text-3xl font-bold mb-1">Rất xin chào bạn đến với Chồn
                         Village!</h1>
                     <div class="flex items-center justify-center w-full max-w-[150px] mx-auto my-4 opacity-70">
@@ -173,7 +173,7 @@
                     <p class="italic text-graphite/70 text-sm">Xin vui lòng điền đầy đủ thông tin dưới đây.</p>
                 </div>
                 <!-- Booking Form -->
-                <form class="w-full space-y-5">
+                <form class="w-full space-y-2.5">
                     <!-- Dates -->
                     <div class="grid grid-cols-2 gap-4">
                         <div class="flex flex-col">
@@ -192,7 +192,7 @@
                         </div>
                     </div>
                     <!-- Guests Section -->
-                    <div class="space-y-4 pt-2">
+                    <div class="space-y-3 pt-1">
                         <div class="flex items-center justify-between border-b border-primary/20 pb-2">
                             <span class="text-xs font-header text-graphite uppercase">Người Lớn</span>
                             <div class="flex items-center gap-3">
@@ -237,7 +237,7 @@
                         </div>
                     </div>
                     <!-- Contact -->
-                    <div class="flex flex-col pt-2">
+                    <div class="flex flex-col pt-0.5">
                         <div class="flex items-center mb-1">
                             <label class="text-[10px] uppercase tracking-widest text-primary font-bold">Xin vui lòng
                                 điền số zalo</label>
@@ -250,7 +250,7 @@
                         </div>
                     </div>
                     <!-- Submit & Footnotes Container -->
-                    <div class="relative w-full mt-4 pb-4">
+                    <div class="relative w-full mt-2 pb-4">
                         <!-- Submit -->
                         <button id="submit-booking"
                             class="w-full bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-ivory font-header uppercase tracking-widest py-4 transition-all duration-500 text-sm shadow-lg flex items-center justify-center"
@@ -259,9 +259,9 @@
                         </button>
 
                         <!-- Footnote & Warning (Absolute inside button area) -->
-                        <div class="absolute -bottom-4 left-0 w-full pointer-events-none flex flex-col items-center">
+                        <div class="absolute -bottom-8 left-0 w-full pointer-events-none flex flex-col items-center">
                             <p id="booking-warning"
-                                class="text-[10px] text-center font-bold italic leading-tight transition-all duration-300"
+                                class="text-[14px] text-center font-bold italic leading-tight transition-all duration-300"
                                 style="color: #8B4513;">
                                 Chồn ưu tiên nhận đặt phòng từ 2 đêm. Với đặt phòng 1 đêm, vui lòng liên hệ Zalo.
                             </p>
@@ -357,12 +357,18 @@
             checkinInput.min = today;
 
             checkinInput.addEventListener('change', () => {
-                // Check out must be at least the day after check in
                 if (checkinInput.value) {
                     const checkinDate = new Date(checkinInput.value);
-                    const nextDay = new Date(checkinDate);
-                    nextDay.setDate(nextDay.getDate() + 1);
-                    checkoutInput.min = nextDay.toISOString().split('T')[0];
+
+                    // Min checkout is 1 day after
+                    const minCoDate = new Date(checkinDate);
+                    minCoDate.setDate(minCoDate.getDate() + 1);
+                    checkoutInput.min = minCoDate.toISOString().split('T')[0];
+
+                    // Propose 2 days stay
+                    const proposedCoDate = new Date(checkinDate);
+                    proposedCoDate.setDate(proposedCoDate.getDate() + 2);
+                    checkoutInput.value = proposedCoDate.toISOString().split('T')[0];
                 }
             });
 
@@ -496,7 +502,7 @@
                             1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5
                         };
 
-                        console.log("[V4.2-REALTIME] Policy sync started.", { dynamicPolicy });
+                        console.log("[V4.4-REALTIME] Policy sync started.", { dynamicPolicy });
 
                         const today = new Date();
                         today.setHours(0, 0, 0, 0);
@@ -507,27 +513,34 @@
 
                         // Ưu tiên dữ liệu từ Sheet
                         if (dynamicPolicy.length > 0) {
-                            const found = dynamicPolicy.find(p => p.Month_ID === monthId);
+                            // Ép kiểu Number để tránh lỗi so sánh chữ với số
+                            const found = dynamicPolicy.find(p => Number(p.Month_ID) === monthId);
                             if (found && found.Min_Days_Lead !== null) {
-                                minDaysLead = found.Min_Days_Lead;
+                                minDaysLead = Number(found.Min_Days_Lead);
+                                console.log("[V4.3] Using Lead Days from Sheet:", minDaysLead);
                             }
                         }
 
-                        isLastMinute = daysLead <= minDaysLead;
+                        // Yêu cầu của bạn: Trong vòng minDaysLead ngày tới thì ĐƯỢC đặt 1 đêm.
+                        // Ngoài khoảng đó thì CHẶN (ưu tiên 2 đêm).
+                        const isAllowedWindow = daysLead <= minDaysLead;
 
                         console.log("Policy check details:", {
                             monthId,
                             daysLead,
-                            minDaysLeadRequired: minDaysLead,
-                            isLastMinute
+                            minDaysAllowedWindow: minDaysLead,
+                            isWithinAllowedWindow: isAllowedWindow
                         });
 
-                        if (isLastMinute) {
-                            console.warn("Smart Logic: Blocked 1-night stay (Too close to travel date)");
+                        if (!isAllowedWindow) {
+                            console.warn("Smart Logic: Blocked distal 1-night stay (Save for 2+ nights)");
                             triggerWarningEffect();
                             isCheckingPolicy = false;
                             return;
                         }
+
+                        // ALLOWED - Reset flag before proceeding
+                        isCheckingPolicy = false;
                     } catch (err) {
                         console.error("Policy check failed", err);
                         triggerWarningEffect();
