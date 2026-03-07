@@ -347,6 +347,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     window.closeGallery = () => {
+        if (window.galleryTimeout) clearTimeout(window.galleryTimeout);
         galleryModal.classList.remove('gallery-active');
         document.body.style.overflow = '';
         setTimeout(() => { galleryModal.classList.add('hidden'); galleryModal.classList.remove('flex'); galleryContent.innerHTML = ''; }, 300);
@@ -356,11 +357,21 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (idx < 0) idx = currentGallery.length - 1;
         if (idx >= currentGallery.length) idx = 0;
         currentMediaIndex = idx;
+
+        if (window.galleryTimeout) clearTimeout(window.galleryTimeout);
         galleryContent.classList.remove('gallery-content-show');
-        setTimeout(() => {
+
+        window.galleryTimeout = setTimeout(() => {
             const it = currentGallery[idx];
-            galleryContent.innerHTML = it.type === 'video' ? `<iframe src="${it.url}" class="w-full h-full rounded" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>` : `<img src="${it.url}" class="max-h-[80vh] object-contain shadow-2xl" />`;
+            // Add a transparent overlay to catch swipes on videos
+            const overlay = `<div class="absolute inset-0 z-10 pointer-events-auto sm:pointer-events-none"></div>`;
+            const content = it.type === 'video'
+                ? `<iframe src="${it.url}" class="w-full h-full rounded" frameborder="0" allow="autoplay; fullscreen" allowfullscreen></iframe>`
+                : `<img src="${it.url}" class="max-h-[80vh] object-contain shadow-2xl" />`;
+
+            galleryContent.innerHTML = `<div class="relative w-full h-full flex items-center justify-center">${content}${overlay}</div>`;
             galleryContent.classList.add('gallery-content-show');
+
             if (galleryCounter) galleryCounter.textContent = `${idx + 1}/${currentGallery.length}`;
             if (galleryDots) galleryDots.innerHTML = currentGallery.map((_, i) => `<div class="h-1 transition-all ${i === idx ? 'w-6 bg-primary' : 'w-2 bg-white/30'} rounded-full"></div>`).join('');
         }, 300);
@@ -454,26 +465,27 @@ function renderRooms(list, schedule, pricing, dates) {
                             `).join('')}
                         </ul>
 
-                        <!-- Pricing Section (The "Lines" and Labels) -->
+                        <!-- Pricing Section (Exact Image Match) -->
                         <div class="border-t border-primary/10 pt-2.5 mt-auto">
-                            <p class="text-[9px] uppercase font-bold text-slate-400 tracking-wider mb-1.5">GIÁ NIÊM YẾT</p>
+                            <p class="text-[11px] font-display font-bold text-slate-400 tracking-wider mb-2">GIÁ NIÊM YẾT</p>
                             
-                            <div class="flex justify-between items-end">
+                            <div class="flex justify-between items-center">
                                 <div class="space-y-1">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-graphite font-bold text-sm leading-none pt-0.5">${renderCurrency(p.weekday)}</span>
-                                        <span class="text-[10px] text-slate-400 italic">/ Đêm Trong Tuần (T2 Đến T5)</span>
+                                    <div class="flex items-center gap-1.5 min-h-[1.5rem]">
+                                        <span class="text-graphite font-bold text-xl leading-none">${renderCurrency(p.weekday)}</span>
+                                        <span class="text-[11px] text-[#788896] font-display">/ Đêm Trong Tuần (T2 Đến T5)</span>
                                     </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-graphite font-bold text-sm leading-none pt-0.5">${renderCurrency(p.weekend)}</span>
-                                        <span class="text-[10px] text-slate-400 italic">/ Đêm Cuối Tuần (T6 Đến CN)</span>
+                                    <div class="flex items-center gap-1.5 min-h-[1.5rem]">
+                                        <span class="text-graphite font-bold text-xl leading-none">${renderCurrency(p.weekend)}</span>
+                                        <span class="text-[11px] text-[#788896] font-display">/ Đêm Cuối Tuần (T6 Đến CN)</span>
                                     </div>
                                 </div>
                                 
                                 <button data-room-id="${room.id}" 
                                     onclick="selectRoom(this, {id:'${room.id}',name:'${room.name}',price:${finalP},img:'${room.img}'})" 
-                                    class="bg-primary text-white font-display italic font-bold text-sm px-5 py-1.5 rounded-full shadow-lg hover:bg-[#C8A96A] transition-all duration-300 active:scale-95 whitespace-nowrap mb-0.5">
-                                    Thêm Phòng
+                                    class="bg-[#C8A96A] text-white font-display italic font-bold text-lg px-4 py-3 rounded-[18px] shadow-sm hover:brightness-110 transition-all duration-300 active:scale-95 leading-tight flex flex-col items-center justify-center min-w-[100px]">
+                                    <span>Thêm</span>
+                                    <span>Phòng</span>
                                 </button>
                             </div>
                         </div>
