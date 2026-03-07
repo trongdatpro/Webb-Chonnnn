@@ -140,6 +140,18 @@
             animation: shake 0.5s cubic-bezier(.36, .07, .19, .97) both;
         }
 
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .animate-pop {
             animation: pop 0.3s ease-out both;
         }
@@ -249,11 +261,14 @@
                     <div class="w-2.5 h-2.5 mx-2 border border-[#c8aa6a] rotate-45"></div>
                     <div class="h-px flex-1 bg-gradient-to-l from-transparent via-[#c8aa6a] to-[#c8aa6a]"></div>
                 </div>
-                <!-- Message -->
                 <div id="available-rooms-message" class="flex justify-center pb-4 px-4 hidden">
                     <p class="text-xl font-display text-primary italic text-center">
                         Những phòng đang hiển thị là những phòng trống vào ngày bạn chọn.
                     </p>
+                </div>
+                <!-- Debug Console (Subtle) -->
+                <div id="debug-console"
+                    class="text-[10px] text-slate-500 font-mono mt-4 text-center px-4 overflow-hidden max-h-32 hidden">
                 </div>
             </div>
             <!-- Room Grid -->
@@ -587,7 +602,7 @@
         }
     </style>
 
-    <script src="js/rooms.js?v=6.6.2"></script>
+    <script src="js/rooms.js?v=6.7.5"></script>
 </body>
 
 </html>
