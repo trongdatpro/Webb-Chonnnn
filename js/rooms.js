@@ -369,6 +369,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('close-gallery-btn').onclick = closeGallery;
         document.getElementById('prev-gallery-btn').onclick = () => showMedia(currentMediaIndex - 1);
         document.getElementById('next-gallery-btn').onclick = () => showMedia(currentMediaIndex + 1);
+
+        // Mobile Swipe Support
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        galleryModal.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        galleryModal.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const diff = touchStartX - touchEndX;
+            if (Math.abs(diff) > 50) { // Threshold for swipe
+                if (diff > 0) showMedia(currentMediaIndex + 1); // Swipe Left -> Next
+                else showMedia(currentMediaIndex - 1); // Swipe Right -> Prev
+            }
+        }, { passive: true });
     }
 
     setTimeout(loadReviews, 300);
