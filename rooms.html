@@ -432,22 +432,9 @@
                         <div class="flex items-center justify-between border-b border-[#c8a96a]/20 pb-4">
                             <div class="flex flex-col">
                                 <span class="text-xs font-serif text-graphite uppercase tracking-widest">Trẻ Em</span>
-                                <select id="modal-children-age"
-                                    class="text-[10px] text-[#c8a96a] bg-transparent border-none py-0 pl-0 pr-5 focus:ring-0 uppercase cursor-pointer hidden mt-1 outline-none">
-                                    <option value="" disabled selected hidden>Chọn độ tuổi</option>
-                                    <option value="1">1 tuổi</option>
-                                    <option value="2">2 tuổi</option>
-                                    <option value="3">3 tuổi</option>
-                                    <option value="4">4 tuổi</option>
-                                    <option value="5">5 tuổi</option>
-                                    <option value="6">6 tuổi</option>
-                                    <option value="7">7 tuổi</option>
-                                    <option value="8">8 tuổi</option>
-                                    <option value="9">9 tuổi</option>
-                                    <option value="10">10 tuổi</option>
-                                    <option value="11">11 tuổi</option>
-                                    <option value="12">12 tuổi</option>
-                                </select>
+                                <div id="modal-children-ages-container" class="grid grid-cols-2 gap-2 mt-2">
+                                    <!-- Dynamic selects will be injected here -->
+                                </div>
                             </div>
                             <div class="flex items-center gap-3">
                                 <button id="modal-minus-child"
@@ -468,7 +455,7 @@
                         ĐỔI NGÀY
                     </button>
                     <!-- Warning -->
-                    <div class="absolute -bottom-8 left-0 w-full pointer-events-none flex flex-col items-center">
+                    <div class="absolute -bottom-10 left-0 w-full pointer-events-none flex flex-col items-center">
                         <p id="modal-booking-warning"
                             class="text-[14px] text-center font-bold italic leading-tight transition-all duration-300"
                             style="color: #8B4513;">
@@ -538,7 +525,69 @@
     <!-- Fly Animation Container -->
     <div id="fly-container" class="fixed top-0 left-0 w-full h-full pointer-events-none z-[110]"></div>
 
-    <script src="js/rooms.js?v=5.0"></script>
+    <!-- Gallery Lightbox Modal -->
+    <div id="gallery-modal"
+        class="fixed inset-0 z-[300] bg-black/95 backdrop-blur-md hidden flex-col items-center justify-center opacity-0 transition-opacity duration-300">
+        <!-- Close Button -->
+        <button id="close-gallery-btn"
+            class="absolute top-6 right-6 p-2 text-white/70 hover:text-white transition-colors z-[310]">
+            <span class="material-symbols-outlined text-4xl">close</span>
+        </button>
+
+        <!-- Media Container -->
+        <div class="relative w-full h-full flex items-center justify-center p-4 sm:p-8">
+            <div id="gallery-content"
+                class="max-w-5xl w-full h-full flex items-center justify-center transition-transform duration-500 scale-95 transform">
+                <!-- Active Media (Image or Video) will be injected here -->
+            </div>
+
+            <!-- Navigation Arrows (Desktop) -->
+            <button id="prev-gallery-btn"
+                class="absolute left-4 top-1/2 -translate-y-1/2 p-4 text-white/50 hover:text-white transition-colors hidden md:block">
+                <span class="material-symbols-outlined text-5xl">chevron_left</span>
+            </button>
+            <button id="next-gallery-btn"
+                class="absolute right-4 top-1/2 -translate-y-1/2 p-4 text-white/50 hover:text-white transition-colors hidden md:block">
+                <span class="material-symbols-outlined text-5xl">chevron_right</span>
+            </button>
+        </div>
+
+        <!-- Swipe Indicator / Counter -->
+        <div class="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
+            <div id="gallery-counter" class="text-white/80 font-display italic tracking-widest text-sm">-- / --</div>
+            <div class="flex gap-1.5" id="gallery-dots">
+                <!-- Dots injected here -->
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .gallery-active {
+            opacity: 1 !important;
+            display: flex !important;
+        }
+
+        .gallery-content-show {
+            scale: 1 !important;
+        }
+
+        /* Swipe Support Helpers */
+        #gallery-content img,
+        #gallery-content video {
+            max-width: 100%;
+            max-height: 85vh;
+            object-fit: contain;
+            border-radius: 4px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Custom scroll behavior specifically for rooms */
+        body.modal-open {
+            overflow: hidden;
+        }
+    </style>
+
+    <script src="js/rooms.js?v=6.6.2"></script>
 </body>
 
 </html>

@@ -118,11 +118,8 @@
 
         #booking-warning.active {
             color: #ef4444 !important;
-            /* text-red-500 */
             display: block !important;
             font-weight: 800;
-            transform: scale(1.05);
-            /* Slightly enlarged when active */
         }
     </style>
 </head>
@@ -163,8 +160,8 @@
                 </div>
                 <!-- Header Content -->
                 <div class="text-center mb-3">
-                    <h1 class="font-display text-graphite text-3xl font-bold mb-1">Rất xin chào bạn đến với Chồn
-                        Village!</h1>
+                    <h1 class="font-display text-graphite text-3xl font-bold mb-1">Rất xin chào bạn đến với <span
+                            class="whitespace-nowrap">Chồn Village!</span></h1>
                     <div class="flex items-center justify-center w-full max-w-[150px] mx-auto my-4 opacity-70">
                         <div class="h-px flex-1 bg-gradient-to-r from-transparent via-[#c8aa6a] to-[#c8aa6a]"></div>
                         <div class="w-1.5 h-1.5 mx-2 border border-[#c8aa6a] rotate-45"></div>
@@ -208,22 +205,9 @@
                         <div class="flex items-center justify-between border-b border-primary/20 pb-2">
                             <div class="flex flex-col">
                                 <span class="text-xs font-header text-graphite uppercase">Trẻ Em</span>
-                                <select id="children-age"
-                                    class="text-[10px] text-primary bg-transparent border-none py-0 pl-0 pr-5 focus:ring-0 uppercase cursor-pointer">
-                                    <option value="" disabled selected hidden>Chọn độ tuổi</option>
-                                    <option value="1">1 tuổi</option>
-                                    <option value="2">2 tuổi</option>
-                                    <option value="3">3 tuổi</option>
-                                    <option value="4">4 tuổi</option>
-                                    <option value="5">5 tuổi</option>
-                                    <option value="6">6 tuổi</option>
-                                    <option value="7">7 tuổi</option>
-                                    <option value="8">8 tuổi</option>
-                                    <option value="9">9 tuổi</option>
-                                    <option value="10">10 tuổi</option>
-                                    <option value="11">11 tuổi</option>
-                                    <option value="12">12 tuổi</option>
-                                </select>
+                                <div id="children-ages-container" class="grid grid-cols-2 gap-2 mt-1">
+                                    <!-- Dynamic selects will be injected here -->
+                                </div>
                             </div>
                             <div class="flex items-center gap-3">
                                 <button id="minus-child"
@@ -259,7 +243,7 @@
                         </button>
 
                         <!-- Footnote & Warning (Absolute inside button area) -->
-                        <div class="absolute -bottom-8 left-0 w-full pointer-events-none flex flex-col items-center">
+                        <div class="absolute -bottom-10 left-0 w-full pointer-events-none flex flex-col items-center">
                             <p id="booking-warning"
                                 class="text-[14px] text-center font-bold italic leading-tight transition-all duration-300"
                                 style="color: #8B4513;">
@@ -396,16 +380,46 @@
             let childCount = 0;
             let isCheckingPolicy = false; // New flag instead of disabling button
 
+            const childrenAgesContainer = document.getElementById('children-ages-container');
+
+            const updateChildAgeFields = (count) => {
+                if (!childrenAgesContainer) return;
+                const currentCount = childrenAgesContainer.children.length;
+
+                if (count > currentCount) {
+                    for (let i = currentCount; i < count; i++) {
+                        const select = document.createElement('select');
+                        // Added pr-8 and bg-chevron to prevent overlap
+                        select.className = "text-[10px] text-primary bg-transparent border-t-0 border-x-0 border-b border-primary/20 p-1 pr-6 focus:ring-0 uppercase cursor-pointer appearance-none";
+                        select.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23C8A96A'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`;
+                        select.style.backgroundRepeat = "no-repeat";
+                        select.style.backgroundPosition = "right 2px center";
+                        select.style.backgroundSize = "12px";
+                        select.innerHTML = `
+                            <option value="" disabled selected hidden>Tuổi bé ${i + 1}</option>
+                            ${Array.from({ length: 12 }, (_, k) => `<option value="${k + 1}">${k + 1} tuổi</option>`).join('')}
+                        `;
+                        childrenAgesContainer.appendChild(select);
+                    }
+                } else {
+                    while (childrenAgesContainer.children.length > count) {
+                        childrenAgesContainer.removeChild(childrenAgesContainer.lastChild);
+                    }
+                }
+            };
+
             minusChild.addEventListener('click', () => {
                 if (childCount > 0) {
                     childCount--;
                     childCountSpan.textContent = childCount;
+                    updateChildAgeFields(childCount);
                 }
             });
 
             plusChild.addEventListener('click', () => {
                 childCount++;
                 childCountSpan.textContent = childCount;
+                updateChildAgeFields(childCount);
             });
 
             const bookingWarning = document.getElementById('booking-warning');
@@ -432,13 +446,12 @@
             });
 
 
-            const triggerWarningEffect = () => {
-                // Ensure it stays red and scaled if already failed
+            const triggerWarningEffect = (msg) => {
+                if (msg) bookingWarning.textContent = msg;
                 bookingWarning.classList.add('active');
-                // Restart animations by removing and forcing reflow
-                bookingWarning.classList.remove('animate-shake', 'animate-pop');
+                bookingWarning.classList.remove('animate-shake');
                 void bookingWarning.offsetWidth; // trigger reflow
-                bookingWarning.classList.add('animate-shake', 'animate-pop');
+                bookingWarning.classList.add('animate-shake');
             };
 
             const form = document.querySelector('form');
@@ -448,15 +461,22 @@
                 const checkinVal = checkinInput.value;
                 const checkoutVal = checkoutInput.value;
                 const phoneVal = document.getElementById('contact-info').value;
-                const childrenAgeVal = document.getElementById('children-age').value;
 
                 if (!checkinVal || !checkoutVal || !phoneVal) {
-                    alert("Vui lòng điền đầy đủ thông tin (ngày và số điện thoại).");
+                    triggerWarningEffect("Vui lòng điền đầy đủ thông tin (ngày và số điện thoại).");
                     return;
                 }
-                if (childCount > 0 && !childrenAgeVal) {
-                    alert("Vui lòng chọn độ tuổi của trẻ em.");
-                    return;
+
+                let childrenAges = [];
+                if (childCount > 0) {
+                    const selects = childrenAgesContainer.querySelectorAll('select');
+                    for (let s of selects) {
+                        if (!s.value) {
+                            triggerWarningEffect("Vui lòng chọn đầy đủ độ tuổi của các bé.");
+                            return;
+                        }
+                        childrenAges.push(parseInt(s.value));
+                    }
                 }
 
                 // Parse dates reliably in local time
@@ -471,25 +491,20 @@
                 const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
                 if (diffDays <= 0) {
-                    alert("Ngày trả phòng phải sau ngày nhận phòng.");
+                    triggerWarningEffect("Ngày trả phòng phải sau ngày nhận phòng.");
                     return;
                 }
 
                 if (diffDays === 1) {
-                    // Start Smart Validation
-                    // If already checking, just trigger animation and return
                     if (isCheckingPolicy) {
                         triggerWarningEffect();
                         return;
                     }
-
                     isCheckingPolicy = true;
 
                     try {
-                        // Use Gviz API with fetchJSONP for real-time sync
                         const policyDataRaw = await fetchJSONP(POLICY_API + "&t=" + Date.now());
                         let dynamicPolicy = [];
-
                         if (policyDataRaw && policyDataRaw.table && policyDataRaw.table.rows) {
                             dynamicPolicy = policyDataRaw.table.rows.map(row => ({
                                 Month_ID: row.c[0] ? row.c[0].v : null,
@@ -497,69 +512,36 @@
                             })).filter(p => p.Month_ID !== null);
                         }
 
-                        // Bảng dữ liệu tĩnh từ ảnh bạn gửi (Fallback)
-                        const STATIC_POLICY = {
-                            1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5
-                        };
-
-                        console.log("[V4.4-REALTIME] Policy sync started.", { dynamicPolicy });
-
-                        const today = new Date();
-                        today.setHours(0, 0, 0, 0);
+                        const STATIC_POLICY = { 1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5 };
+                        const today = new Date(); today.setHours(0, 0, 0, 0);
                         const daysLead = Math.ceil((checkinDateObj - today) / (1000 * 60 * 60 * 24));
                         const monthId = checkinDateObj.getMonth() + 1;
-
                         let minDaysLead = STATIC_POLICY[monthId] || 7;
 
-                        // Ưu tiên dữ liệu từ Sheet
                         if (dynamicPolicy.length > 0) {
-                            // Ép kiểu Number để tránh lỗi so sánh chữ với số
                             const found = dynamicPolicy.find(p => Number(p.Month_ID) === monthId);
-                            if (found && found.Min_Days_Lead !== null) {
-                                minDaysLead = Number(found.Min_Days_Lead);
-                                console.log("[V4.3] Using Lead Days from Sheet:", minDaysLead);
-                            }
+                            if (found && found.Min_Days_Lead !== null) minDaysLead = Number(found.Min_Days_Lead);
                         }
 
-                        // Yêu cầu của bạn: Trong vòng minDaysLead ngày tới thì ĐƯỢC đặt 1 đêm.
-                        // Ngoài khoảng đó thì CHẶN (ưu tiên 2 đêm).
-                        const isAllowedWindow = daysLead <= minDaysLead;
-
-                        console.log("Policy check details:", {
-                            monthId,
-                            daysLead,
-                            minDaysAllowedWindow: minDaysLead,
-                            isWithinAllowedWindow: isAllowedWindow
-                        });
-
-                        if (!isAllowedWindow) {
-                            console.warn("Smart Logic: Blocked distal 1-night stay (Save for 2+ nights)");
-                            triggerWarningEffect();
+                        if (daysLead > minDaysLead) {
+                            triggerWarningEffect("Chồn ưu tiên nhận đặt phòng từ 2 đêm. Với đặt phòng 1 đêm, vui lòng liên hệ Zalo.");
                             isCheckingPolicy = false;
                             return;
                         }
-
-                        // ALLOWED - Reset flag before proceeding
                         isCheckingPolicy = false;
                     } catch (err) {
-                        console.error("Policy check failed", err);
                         triggerWarningEffect();
                         isCheckingPolicy = false;
                         return;
-                    } finally {
-                        // In case of success (isLastMinute is true), we don't necessarily reset isCheckingPolicy 
-                        // because we are navigating away. But for safety:
-                        // isCheckingPolicy = false; 
                     }
                 }
 
-                // If allowed (diffDays >= 2 OR Smart Check passed)
                 const bookingData = {
                     checkin: checkinVal,
                     checkout: checkoutVal,
                     adults: adultCount,
                     children: childCount,
-                    childrenAgeCategory: document.getElementById('children-age').value,
+                    childrenAges: childrenAges,
                     phone: phoneVal
                 };
                 sessionStorage.setItem('chonVillageBooking', JSON.stringify(bookingData));
