@@ -39,8 +39,8 @@ const convertGDriveUrl = (url, isVideo = false, highRes = false) => {
             return `https://drive.google.com/file/d/${fileId}/preview`;
         }
         // If highRes is true, we use the uc export endpoint or a very large thumbnail size
-        // w0 or w4096 is often used for original/high quality. w4096 is safer for most Drive images.
-        const sizeParam = highRes ? "w4096" : "w2048";
+        // w0 or w4096 is often used for original/high quality. w3000 is a good balance for speed and quality.
+        const sizeParam = highRes ? "w3000" : "w2048";
         return `https://drive.google.com/thumbnail?id=${fileId}&sz=${sizeParam}`;
     }
     return url;
@@ -1376,7 +1376,7 @@ function openGallery(roomId) {
                 
                 .detail-container { position: fixed; inset: 0; background: black; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 0; }
                 .detail-container.active { display: flex; }
-                .gallery-media { max-width: 100vw; max-height: 100vh; width: auto; height: auto; object-fit: contain; pointer-events: none; }
+                .gallery-media { max-width: 100vw; max-height: 100vh; width: auto; height: auto; object-fit: contain; }
                 .nav-btn, .detail-close-btn-bottom { background: rgba(0, 0, 0, 0.4); color: white; border: 1px solid rgba(255,255,255,0.2); width: 50px; height: 50px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(8px); transition: 0.3s; display: flex; align-items: center; justify-content: center; z-index: 220; }
                 .nav-btn:hover, .detail-close-btn-bottom:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); border-color: white; }
                 .detail-close-btn-bottom:hover { background: rgba(239, 68, 68, 0.4); } /* Reddish tint on hover for close */
@@ -1511,11 +1511,19 @@ function updateDetailDisplay() {
     if (!container || !item) return;
 
     if (item.type === 'video') {
-        container.innerHTML = `<iframe src="${item.url}" class="gallery-media w-full h-[60vh] sm:h-[70vh]" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        container.innerHTML = `<iframe src="${item.url}" class="gallery-media w-full h-[60vh] sm:h-[70vh]" frameborder="0" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
     } else {
-        // Use highRes = true for the detail view to get maximum quality
+        // Use highRes = true (w3000) for the detail view
         const highResUrl = convertGDriveUrl(item.url, false, true);
         container.innerHTML = `<img src="${highResUrl}" class="gallery-media animate-[fadeIn_0.5s_ease-out]"/>`;
+
+        // --- PRELOAD NEXT IMAGE ---
+        const nextIdx = (currentGalleryIndex + 1) % currentGallery.length;
+        const nextItem = currentGallery[nextIdx];
+        if (nextItem && nextItem.type !== 'video') {
+            const nextImg = new Image();
+            nextImg.src = convertGDriveUrl(nextItem.url, false, true);
+        }
     }
 
     if (thumbContainer) {
