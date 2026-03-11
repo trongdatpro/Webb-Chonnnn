@@ -21,26 +21,26 @@ const renderCurrency = (val) => {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-const convertGDriveUrl = (url, isVideo = false, highRes = false) => {
+const convertGDriveUrl = (url, isVideo = false, highRes = false, customSize = null) => {
     if (!url) return "";
     let fileId = "";
 
-    // Support various formats including /file/d/ID/view and ?id=ID
     const idMatches = url.match(/\/d\/(.+?)\//) ||
         url.match(/\/d\/(.+?)$/) ||
         url.match(/id=(.+?)(&|$)/);
 
     if (idMatches && idMatches[1]) {
-        fileId = idMatches[1].split(/[?&]/)[0]; // Clean up any trailing params
+        fileId = idMatches[1].split(/[?&]/)[0];
     }
 
     if (fileId) {
         if (isVideo) {
-            return `https://drive.google.com/file/d/${fileId}/preview`;
+            // Attempt to force quality for various players
+            const baseUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+            return baseUrl + "?vq=hd720";
         }
-        // If highRes is true, we use the uc export endpoint or a very large thumbnail size
-        // w0 or w4096 is often used for original/high quality. w1600 is optimal for mobile speed.
-        const sizeParam = highRes ? "w1600" : "w2048";
+        // customSize > highRes > default
+        let sizeParam = customSize || (highRes ? "w1600" : "w2048");
         return `https://drive.google.com/thumbnail?id=${fileId}&sz=${sizeParam}`;
     }
     return url;
@@ -1443,13 +1443,12 @@ function renderGalleryGrid() {
     const secondary = currentGallery.slice(1, 3);
     const rest = currentGallery.slice(3);
 
-    const featureThumbUrl = feature.type === 'video' ? feature.url.replace('/preview', '').replace('/thumbnail', '') + '&sz=w1200' : feature.url;
-    const finalFeatureThumb = feature.type === 'video' ? convertGDriveUrl(featureThumbUrl, false) : feature.url;
+    const finalFeatureThumb = convertGDriveUrl(feature.url, false, false, "w1200");
 
     gridView.innerHTML = `
         <div class="grid-layout">
             <div class="grid-item grid-feature" onclick="openDetail(0)">
-                <img src="${finalFeatureThumb}" loading="lazy" />
+                <img src="${finalFeatureThumb}" loading="lazy" class="w-full h-full object-cover" />
                 ${feature.type === 'video' ? `
                     <div class="video-play-icon">
                         <span class="material-symbols-outlined text-white text-6xl">play_circle</span>
@@ -1457,11 +1456,10 @@ function renderGalleryGrid() {
                 ` : ''}
             </div>
             ${secondary.map((m, i) => {
-        const thumbUrl = m.type.toLowerCase() === 'video' ? m.url.replace('/preview', '').replace('/thumbnail', '') + '&sz=w1024' : m.url;
-        const finalThumb = m.type.toLowerCase() === 'video' ? convertGDriveUrl(thumbUrl, false) : m.url;
+        const finalThumb = convertGDriveUrl(m.url, false, false, "w1024");
         return `
                 <div class="grid-item grid-secondary" onclick="openDetail(${i + 1})">
-                    <img src="${finalThumb}" loading="lazy" />
+                    <img src="${finalThumb}" loading="lazy" class="w-full h-full object-cover" />
                     ${m.type === 'video' ? `
                         <div class="video-play-icon">
                             <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
@@ -1472,11 +1470,10 @@ function renderGalleryGrid() {
         </div>
         <div class="grid-thumbnails">
             ${rest.map((m, i) => {
-        const thumbUrl = m.type.toLowerCase() === 'video' ? m.url.replace('/preview', '').replace('/thumbnail', '') + '&sz=w800' : m.url;
-        const finalThumb = m.type.toLowerCase() === 'video' ? convertGDriveUrl(thumbUrl, false) : m.url;
+        const finalThumb = convertGDriveUrl(m.url, false, false, "w800");
         return `
                 <div class="grid-item grid-thumb" onclick="openDetail(${i + 3})">
-                    <img src="${finalThumb}" loading="lazy" />
+                    <img src="${finalThumb}" loading="lazy" class="w-full h-full object-cover" />
                     ${m.type === 'video' ? `
                         <div class="video-play-icon">
                             <span class="material-symbols-outlined text-white text-3xl">play_circle</span>
@@ -1531,14 +1528,14 @@ function updateDetailDisplay() {
 
     if (thumbContainer) {
         thumbContainer.innerHTML = currentGallery.map((m, idx) => {
-            const thumbUrl = m.type.toLowerCase() === 'video' ? m.url.replace('/preview', '') + '&sz=w200' : m.url;
-            const finalThumb = m.type.toLowerCase() === 'video' ? convertGDriveUrl(thumbUrl, false) : m.url;
+            // Use w300 for clearer thumbnails that are still fast
+            const thumbUrl = convertGDriveUrl(m.url, false, false, "w300");
             return `
             <div onclick="jumpToGallery(${idx})" 
-                 class="h-full aspect-square flex-shrink-0 cursor-pointer border-2 transition-all duration-300 rounded overflow-hidden relative ${idx === currentGalleryIndex ? 'border-[#BF953F] ring-2 ring-[#BF953F]/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}">
-                <img src="${finalThumb}" class="w-full h-full object-cover bg-slate-800"/>
+                 class="w-14 h-14 flex-shrink-0 cursor-pointer border-2 transition-all duration-300 rounded overflow-hidden relative ${idx === currentGalleryIndex ? 'border-[#BF953F] ring-2 ring-[#BF953F]/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}">
+                <img src="${thumbUrl}" class="w-full h-full object-cover bg-slate-800 pointer-events-none"/>
                 ${m.type === 'video' ? `
-                    <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                         <span class="material-symbols-outlined text-white text-xl">play_circle</span>
                     </div>
                 ` : ''}
