@@ -21,7 +21,7 @@ const renderCurrency = (val) => {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
-const convertGDriveUrl = (url, isVideo = false) => {
+const convertGDriveUrl = (url, isVideo = false, highRes = false) => {
     if (!url) return "";
     let fileId = "";
 
@@ -38,8 +38,10 @@ const convertGDriveUrl = (url, isVideo = false) => {
         if (isVideo) {
             return `https://drive.google.com/file/d/${fileId}/preview`;
         }
-        // Thumbnail endpoint works for both images and videos to get a preview frame
-        return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1200`;
+        // If highRes is true, we use the uc export endpoint or a very large thumbnail size
+        // w0 or w4096 is often used for original/high quality. w4096 is safer for most Drive images.
+        const sizeParam = highRes ? "w4096" : "w2048";
+        return `https://drive.google.com/thumbnail?id=${fileId}&sz=${sizeParam}`;
     }
     return url;
 };
@@ -497,7 +499,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // OUTSIDE PERIOD: Enforce all standard policies.
 
                 // A. Standard Guest Capacity Filter
-                if (adults > maxAdults) isAvailable = false;
+                // RELAXED: Don't hide rooms if adults > maxAdults, we check total capacity at confirmation
+                // if (adults > maxAdults) isAvailable = false;
 
                 // B. Standard Children Under 6 Policy Filter
                 if (children > 0) {
@@ -579,7 +582,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <div class="relative p-[3px] rounded-xl bg-gradient-to-b from-[#BF953F] via-[#FCF6BA] to-[#AA771C] shadow-lg shadow-black/20 group/btn active:scale-95 transition-transform duration-300">
                         <div class="p-[1px] rounded-[9px] bg-gradient-to-b from-[#AA771C] via-[#FCF6BA] to-[#BF953F]">
                             <button data-room-id="${room.id}" onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: roomImg, totalPrice: finalPriceToPass })})' 
-                                class="${isAlreadySelected ? 'bg-[#A0824B] text-white pointer-events-none' : 'bg-primary text-white'} hover:bg-[#A0824B] font-display italic tracking-wider font-bold text-[15px] sm:text-[16px] py-2.5 px-8 rounded-[8px] transition-all duration-500 flex items-center justify-center leading-none uppercase w-full whitespace-nowrap">
+                                class="${isAlreadySelected ? 'bg-[#A0824B] text-white pointer-events-none' : 'bg-primary text-white'} hover:bg-[#A0824B] font-sans tracking-wider font-bold text-[15px] sm:text-[16px] py-2.5 px-8 rounded-[8px] transition-all duration-500 flex items-center justify-center leading-none uppercase w-full whitespace-nowrap">
                                 ${isAlreadySelected ? 'Đã Chọn' : 'Chọn Phòng'}
                             </button>
                         </div>
@@ -926,12 +929,67 @@ document.addEventListener('DOMContentLoaded', async () => {
                 headerDecorTop?.classList.add('opacity-0');
                 headerDecorBottom?.classList.add('opacity-0');
                 headerChangeDateBtn?.classList.replace('opacity-100', 'opacity-0');
-                headerChangeDateBtn?.classList.add('pointer-events-none');
                 changeDateBtn?.classList.remove('opacity-0', 'pointer-events-none');
             }
         });
     }
 
+    // Xử lý nút Xác nhận đặt cuối cùng
+    const confirmBtn = document.getElementById('confirm-waitlist-btn');
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', (e) => {
+            if (selectedRooms.length === 0) return;
+
+            // --- CAPACITY VALIDATION (Adults only as per request) ---
+            const totalAdults = adults;
+            const totalCapacity = selectedRooms.length * 3; // Max 3 adults per room
+            const warningEl = document.getElementById('waitlist-booking-warning');
+
+            if (totalAdults > totalCapacity) {
+                // Prevent global click listener from hiding it immediately on second click
+                e.stopPropagation();
+
+                if (warningEl) {
+                    warningEl.classList.remove('hidden');
+                    // Sync with triggerModalWarningEffect behavior
+                    warningEl.classList.add('animate-shake', 'animate-pop');
+                    warningEl.style.animation = 'none';
+                    void warningEl.offsetWidth;
+                    warningEl.style.animation = '';
+
+                    // Auto-hide after 3 seconds (Reset timer on every click)
+                    if (window.waitlistWarningTimeout) clearTimeout(window.waitlistWarningTimeout);
+                    window.waitlistWarningTimeout = setTimeout(() => {
+                        warningEl.classList.add('hidden');
+                    }, 3000);
+
+                    // Click anywhere to hide immediately (one-time listener)
+                    // We only add it if it's not already visible to avoid multiple listeners
+                    if (!window.isWaitlistWarningActive) {
+                        window.isWaitlistWarningActive = true;
+                        const hideNow = () => {
+                            warningEl.classList.add('hidden');
+                            window.isWaitlistWarningActive = false;
+                            document.removeEventListener('click', hideNow);
+                        };
+                        setTimeout(() => document.addEventListener('click', hideNow), 10);
+                    }
+                }
+                return;
+            }
+
+            if (warningEl) warningEl.classList.add('hidden');
+            confirmBtn.textContent = "Đang xử lý...";
+
+            // Lưu danh sách phòng vào sessionStorage
+            sessionStorage.setItem('chonVillageSelectedRooms', JSON.stringify(selectedRooms));
+            sessionStorage.setItem('chonVillageSelectedRoom', JSON.stringify(selectedRooms[0]));
+
+            setTimeout(() => {
+                window.location.href = 'checkout.html';
+            }, 500);
+        });
+    }
 });
 
 // --- Waitlist Logic (Phòng chờ đặt) ---
@@ -1012,16 +1070,22 @@ function animateFly(startEl, targetEl, imgSrc, callback) {
     clone.style.height = `${startRect.height}px`;
     clone.style.opacity = '1';
 
+    // Force reflow for first selection animation
+    void clone.offsetWidth;
+
     flyContainer.appendChild(clone);
 
     // Bắt đầu bay
     requestAnimationFrame(() => {
-        clone.style.top = `${targetRect.top}px`;
-        clone.style.left = `${targetRect.left}px`;
-        clone.style.width = `${targetRect.width}px`;
-        clone.style.height = `${targetRect.height}px`;
+        // Ensure rects are fresh
+        const freshTargetRect = targetEl.getBoundingClientRect();
+        clone.style.top = `${freshTargetRect.top}px`;
+        clone.style.left = `${freshTargetRect.left}px`;
+        clone.style.width = `${freshTargetRect.width}px`;
+        clone.style.height = `${freshTargetRect.height}px`;
         clone.style.opacity = '0.7';
         clone.style.borderRadius = '8px';
+        clone.style.transform = 'scale(0.3)'; // Added shrink effect
     });
 
     // Xóa clone sau khi bay xong
@@ -1062,30 +1126,6 @@ window.selectRoom = function (btn, roomData) {
     }
 };
 
-// Xử lý nút Xác nhận đặt cuối cùng
-document.addEventListener('DOMContentLoaded', () => {
-    const confirmBtn = document.getElementById('confirm-waitlist-btn');
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => {
-            if (selectedRooms.length === 0) return;
-
-            confirmBtn.textContent = "Đang xử lý...";
-
-            // Lưu danh sách phòng vào sessionStorage
-            // Lưu ý: checkout.html hiện tại nhận một object duy nhất 'chonVillageSelectedRoom'. 
-            // Em sẽ gửi phòng đầu tiên hoặc có thể upgrade checkout sau.
-            // Để demo, em gửi phòng cuối cùng được chọn hoặc format lại logic checkout.
-            sessionStorage.setItem('chonVillageSelectedRooms', JSON.stringify(selectedRooms));
-
-            // Giữ tương thích với logic cũ (lấy phòng đầu tiên)
-            sessionStorage.setItem('chonVillageSelectedRoom', JSON.stringify(selectedRooms[0]));
-
-            setTimeout(() => {
-                window.location.href = 'checkout.html';
-            }, 500);
-        });
-    }
-});
 
 // --- Reviews Logic ---
 const REVIEWS_API_URL = "https://script.google.com/macros/s/AKfycbyKwYdqY1Xd762VehUWY8wCKCdek6rc0lASlrUfZVh33B4X_ozjWSxqDUt3PIz27cg/exec";
@@ -1334,10 +1374,10 @@ function openGallery(roomId) {
                 @media (max-width: 480px) { .grid-thumbnails { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
                 .grid-thumb { aspect-ratio: 16/10; }
                 
-                .detail-container { position: fixed; inset: 0; background: black; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+                .detail-container { position: fixed; inset: 0; background: black; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 0; }
                 .detail-container.active { display: flex; }
-                .gallery-media { max-width: 92%; max-height: 82vh; object-fit: contain; box-shadow: 0 0 40px rgba(0,0,0,0.5); border-radius: 4px; }
-                .nav-btn, .detail-close-btn-bottom { background: rgba(255,255,255,0.15); color: white; border: 1px solid rgba(255,255,255,0.2); width: 50px; height: 50px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(8px); transition: 0.3s; display: flex; align-items: center; justify-content: center; z-index: 220; }
+                .gallery-media { max-width: 100vw; max-height: 100vh; width: auto; height: auto; object-fit: contain; pointer-events: none; }
+                .nav-btn, .detail-close-btn-bottom { background: rgba(0, 0, 0, 0.4); color: white; border: 1px solid rgba(255,255,255,0.2); width: 50px; height: 50px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(8px); transition: 0.3s; display: flex; align-items: center; justify-content: center; z-index: 220; }
                 .nav-btn:hover, .detail-close-btn-bottom:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); border-color: white; }
                 .detail-close-btn-bottom:hover { background: rgba(239, 68, 68, 0.4); } /* Reddish tint on hover for close */
                 
@@ -1361,7 +1401,7 @@ function openGallery(roomId) {
             </div>
 
             <div id="detail-view" class="detail-container">
-                <div id="detail-media-container" class="w-full h-full flex items-center justify-center p-4"></div>
+                <div id="detail-media-container" class="w-full h-full flex items-center justify-center p-0"></div>
                 
                 <!-- Navigation & Close Buttons Area -->
                 <div class="flex gap-8 mt-4 mb-2 z-[210]">
@@ -1410,24 +1450,38 @@ function renderGalleryGrid() {
         <div class="grid-layout">
             <div class="grid-item grid-feature" onclick="openDetail(0)">
                 <img src="${finalFeatureThumb}" loading="lazy" />
+                ${feature.type === 'video' ? `
+                    <div class="video-play-icon">
+                        <span class="material-symbols-outlined text-white text-6xl">play_circle</span>
+                    </div>
+                ` : ''}
             </div>
             ${secondary.map((m, i) => {
-        // Get thumbnail for video or image
-        const thumbUrl = m.type.toLowerCase() === 'video' ? m.url.replace('/preview', '').replace('/thumbnail', '') + '&sz=w600' : m.url;
+        const thumbUrl = m.type.toLowerCase() === 'video' ? m.url.replace('/preview', '').replace('/thumbnail', '') + '&sz=w1024' : m.url;
         const finalThumb = m.type.toLowerCase() === 'video' ? convertGDriveUrl(thumbUrl, false) : m.url;
         return `
                 <div class="grid-item grid-secondary" onclick="openDetail(${i + 1})">
                     <img src="${finalThumb}" loading="lazy" />
+                    ${m.type === 'video' ? `
+                        <div class="video-play-icon">
+                            <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
+                        </div>
+                    ` : ''}
                 </div>`;
     }).join('')}
         </div>
         <div class="grid-thumbnails">
             ${rest.map((m, i) => {
-        const thumbUrl = m.type.toLowerCase() === 'video' ? m.url.replace('/preview', '').replace('/thumbnail', '') + '&sz=w400' : m.url;
+        const thumbUrl = m.type.toLowerCase() === 'video' ? m.url.replace('/preview', '').replace('/thumbnail', '') + '&sz=w800' : m.url;
         const finalThumb = m.type.toLowerCase() === 'video' ? convertGDriveUrl(thumbUrl, false) : m.url;
         return `
                 <div class="grid-item grid-thumb" onclick="openDetail(${i + 3})">
                     <img src="${finalThumb}" loading="lazy" />
+                    ${m.type === 'video' ? `
+                        <div class="video-play-icon">
+                            <span class="material-symbols-outlined text-white text-3xl">play_circle</span>
+                        </div>
+                    ` : ''}
                 </div>`;
     }).join('')}
         </div>
@@ -1459,7 +1513,9 @@ function updateDetailDisplay() {
     if (item.type === 'video') {
         container.innerHTML = `<iframe src="${item.url}" class="gallery-media w-full h-[60vh] sm:h-[70vh]" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
     } else {
-        container.innerHTML = `<img src="${item.url}" class="gallery-media animate-[fadeIn_0.5s_ease-out]"/>`;
+        // Use highRes = true for the detail view to get maximum quality
+        const highResUrl = convertGDriveUrl(item.url, false, true);
+        container.innerHTML = `<img src="${highResUrl}" class="gallery-media animate-[fadeIn_0.5s_ease-out]"/>`;
     }
 
     if (thumbContainer) {
@@ -1468,8 +1524,13 @@ function updateDetailDisplay() {
             const finalThumb = m.type.toLowerCase() === 'video' ? convertGDriveUrl(thumbUrl, false) : m.url;
             return `
             <div onclick="jumpToGallery(${idx})" 
-                 class="h-full aspect-square flex-shrink-0 cursor-pointer border-2 transition-all duration-300 rounded overflow-hidden ${idx === currentGalleryIndex ? 'border-[#BF953F] ring-2 ring-[#BF953F]/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}">
+                 class="h-full aspect-square flex-shrink-0 cursor-pointer border-2 transition-all duration-300 rounded overflow-hidden relative ${idx === currentGalleryIndex ? 'border-[#BF953F] ring-2 ring-[#BF953F]/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}">
                 <img src="${finalThumb}" class="w-full h-full object-cover bg-slate-800"/>
+                ${m.type === 'video' ? `
+                    <div class="absolute inset-0 flex items-center justify-center bg-black/20">
+                        <span class="material-symbols-outlined text-white text-xl">play_circle</span>
+                    </div>
+                ` : ''}
             </div>
         `;
         }).join('');

@@ -214,7 +214,7 @@
             <div id="header-change-date-btn"
                 onclick="document.getElementById('edit-booking-modal').classList.remove('hidden');"
                 class="opacity-0 pointer-events-none transition-all duration-500 scale-90 mt-2 absolute top-1/2 -translate-y-1/2 right-4 group flex items-center gap-1.5 text-[#C8A96A] bg-[#FAF6EC] px-4 py-2 rounded-full shadow-sm border border-[#C8A96A]/20 cursor-pointer">
-                <span class="text-xs font-header font-bold uppercase tracking-widest">Thay đổi ngày</span>
+                <span class="text-xs font-display font-bold uppercase tracking-widest">Thay đổi ngày</span>
                 <span class="material-symbols-outlined text-[1rem]">edit</span>
             </div>
         </header>
@@ -235,7 +235,7 @@
             <div id="change-date-btn"
                 class="group flex items-center gap-1.5 text-[#C8A96A] bg-[#FAF6EC] px-4 py-2 rounded-full hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-[#FAF6EC] transition-all duration-500 shadow-sm border border-[#C8A96A]/20">
                 <span
-                    class="text-xs font-header font-bold uppercase tracking-widest group-hover:text-[#FAF6EC] transition-colors duration-500">Thay
+                    class="text-xs font-display font-bold uppercase tracking-widest group-hover:text-[#FAF6EC] transition-colors duration-500">Thay
                     đổi ngày</span>
                 <span
                     class="material-symbols-outlined text-[1rem] group-hover:text-[#FAF6EC] transition-colors duration-500">edit</span>
@@ -388,7 +388,7 @@
                     </svg>
                 </div>
 
-                <h3 class="font-serif font-bold text-2xl text-graphite uppercase tracking-wide mb-6">THAY ĐỔI NGÀY
+                <h3 class="font-display font-bold text-2xl text-graphite uppercase tracking-wide mb-6">THAY ĐỔI NGÀY
                 </h3>
 
                 <div class="w-full space-y-6">
@@ -432,7 +432,7 @@
                         </div>
                         <div class="flex items-center justify-between border-b border-[#c8a96a]/20 pb-4">
                             <div class="flex flex-col">
-                                <span class="text-xs font-header text-graphite uppercase">Trẻ Em</span>
+                                <span class="text-xs font-display text-graphite uppercase">Trẻ Em</span>
                                 <div id="modal-children-ages-container" class="flex flex-wrap gap-2 mt-1">
                                     <!-- Dynamic child age selects will appear here -->
                                 </div>
@@ -452,7 +452,7 @@
 
                 <div class="w-full mt-8 pt-2 relative pb-6">
                     <button id="modal-save-btn"
-                        class="w-full bg-[#c8a96a] hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-[#FFFFF5] font-serif font-bold uppercase tracking-widest py-4 transition-all duration-500 text-sm shadow-lg flex items-center justify-center cursor-pointer border-none outline-none relative z-10">
+                        class="w-full bg-[#c8a96a] hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-[#FFFFF5] font-display font-bold uppercase tracking-widest py-4 transition-all duration-500 text-sm shadow-lg flex items-center justify-center cursor-pointer border-none outline-none relative z-10">
                         ĐỔI NGÀY
                     </button>
                     <!-- Warning -->
@@ -497,9 +497,16 @@
                     </svg>
                 </div>
 
+                <!-- Capacity Warning (Hidden by default) -->
+                <div id="waitlist-booking-warning"
+                    class="hidden text-[10px] sm:text-[11px] text-red-500 font-bold italic text-center px-4 transition-all duration-300">
+                    Vượt quá số người quy định,1 phòng chỉ ở tối đa 3 khách kèm phí như trên thông tin mỗi
+                    phòng
+                </div>
+
                 <!-- Confirm Button on TOP -->
                 <button id="confirm-waitlist-btn"
-                    class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white px-6 py-2 rounded-full font-header font-bold uppercase tracking-widest text-[10px] sm:text-[11px] shadow-lg active:scale-95 transition-all duration-500 w-max">
+                    class="bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-white px-6 py-2 rounded-full font-display font-bold uppercase tracking-widest text-[10px] sm:text-[11px] shadow-lg active:scale-95 transition-all duration-500 w-max">
                     Xác nhận đặt
                 </button>
 
