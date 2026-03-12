@@ -21,10 +21,48 @@ const renderCurrency = (val) => {
     return val.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 };
 
+const isBooked = (s) => {
+    if (!s) return false;
+    // Normalize both Unicode and whitespace
+    const clean = String(s).normalize('NFC').trim().toLowerCase();
+    // Common indicators for a booked/unavailable room
+    return clean === 'booked' || clean === 'đã đặt' || clean === 'b' || clean.includes('đã đặt') || clean.includes('đặt');
+};
+
 const convertGDriveUrl = (url, isVideo = false, highRes = false, customSize = null) => {
     if (!url) return "";
     let fileId = "";
 
+    // --- YouTube Support ---
+    const ytMatch = url.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/);
+    if (ytMatch && ytMatch[1]) {
+        const ytId = ytMatch[1];
+        if (isVideo) {
+            return `https://www.youtube.com/embed/${ytId}?autoplay=1&rel=0`;
+        }
+        // YouTube thumbnail
+        return `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+    }
+
+    // --- Cloudinary Support ---
+    if (url.includes('cloudinary.com')) {
+        if (isVideo) return url;
+        
+        let trans = customSize || (highRes ? "w_1600" : "w_800");
+        // Normalize size param (e.g., w1600 -> w_1600)
+        if (typeof trans === 'string' && trans.startsWith('w') && !trans.includes('_')) {
+            trans = 'w_' + trans.substring(1);
+        }
+        
+        const finalTrans = `f_jpg,so_2,q_auto,${trans}`;
+        
+        // Inject transformations right after /upload/
+        // We do NOT capture the version string here to avoid breaking the URL
+        return url.replace(/\/upload\//, `/upload/${finalTrans}/`)
+                  .replace(/\.(mp4|webm|mov|m4v|ogv)(\?.*)?$/i, '.jpg$2');
+    }
+
+    // --- Google Drive Support ---
     const idMatches = url.match(/\/d\/(.+?)\//) ||
         url.match(/\/d\/(.+?)$/) ||
         url.match(/id=(.+?)(&|$)/);
@@ -35,9 +73,9 @@ const convertGDriveUrl = (url, isVideo = false, highRes = false, customSize = nu
 
     if (fileId) {
         if (isVideo) {
-            // Attempt to force quality for various players
+            // Attempt to force quality and autoplay for GDrive preview
             const baseUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-            return baseUrl + "?vq=hd720";
+            return baseUrl + "?vq=hd720&autoplay=1";
         }
         // customSize > highRes > default
         let sizeParam = customSize || (highRes ? "w1600" : "w2048");
@@ -259,6 +297,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (!rawUrl) return;
 
                 const mUrl = convertGDriveUrl(rawUrl, mType === 'video');
+                console.log(`[Gallery Debug] Room: ${rId}, Type: ${mType}, Final URL: ${mUrl}`);
                 if (!window.galleryData[rId]) window.galleryData[rId] = [];
                 window.galleryData[rId].push({ url: mUrl, type: mType, order: mOrder });
             });
@@ -305,11 +344,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (typeof val === 'string' && val.startsWith('Date(')) {
                     const parts = val.substring(5, val.length - 1).split(',');
                     dateStr = `${parts[0]}-${String(parseInt(parts[1]) + 1).padStart(2, '0')}-${String(parseInt(parts[2])).padStart(2, '0')}`;
-                } else { dateStr = String(formatted || val).trim(); }
+                } else {
+                    // Robust normalization: truncate time and handle DD/MM/YYYY
+                    let s = String(formatted || val).trim().split(' ')[0]; // Truncate time "00:00:00"
+                    if (s.includes('/')) {
+                        const parts = s.split('/');
+                        if (parts[2] && parts[2].length === 4) { // DD/MM/YYYY
+                            dateStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                        } else if (parts[0] && parts[0].length === 4) { // YYYY/MM/DD
+                            dateStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                        }
+                    } else if (s.includes('-')) {
+                        const parts = s.split('-');
+                        if (parts[0] && parts[0].length === 4) { // YYYY-MM-DD
+                            dateStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                        }
+                    } else {
+                        dateStr = s;
+                    }
+                }
 
-                const cleanRid = String(rId).trim();
+                const cleanRid = String(rId).trim().replace(/ /g, '_');
                 if (!scheduleData[cleanRid]) scheduleData[cleanRid] = {};
                 scheduleData[cleanRid][dateStr] = String(status).trim();
+                console.log(`[Parser Sync] Room: ${cleanRid}, Date: ${dateStr}, Status: ${status}`);
             });
 
             if (monthKey && pricingResponses[index] && pricingResponses[index].table) {
@@ -318,7 +376,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     if (!row.c || row.c.length < 6) return;
                     const rId = row.c[0] ? row.c[0].v : null;
                     if (!rId) return;
-                    const cleanRid = String(rId).trim();
+                    const cleanRid = String(rId).trim().replace(/ /g, '_');
 
                     const getPrice = (cell) => {
                         if (!cell) return 0;
@@ -363,25 +421,30 @@ document.addEventListener('DOMContentLoaded', async () => {
             curr.setDate(curr.getDate() + 1);
         }
 
+        const isOneNightStay = datesToStay.length === 1;
+        const nowAtLat = new Date();
+        const currentMonthId = nowAtLat.getMonth() + 1;
+        const currentYear = nowAtLat.getFullYear();
+        const isCurrentMonth = (checkinDate.getMonth() + 1 === currentMonthId) && (checkinDate.getFullYear() === currentYear);
+
         let allowedRooms = localRooms;
-        if (adults >= 3) {
-            // Case 1: 3+ Adults (+ optional Children) -> All Rooms
+        if (isOneNightStay && isCurrentMonth) {
+            // RELAXED: For 1-night stays in current month, check ALL rooms for Gap-Filler status
             allowedRooms = localRooms;
-        } else if (adults === 2 && children === 1) {
-            // Case 2: 2 Adults + 1 Child
-            if (isUnder6) {
-                // Case 2a: Under 6 -> Green Room Only
-                allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
-            } else {
-                // Case 2b: 6+ -> All Rooms
+        } else {
+            if (adults >= 3) {
                 allowedRooms = localRooms;
+            } else if (adults === 2 && children === 1) {
+                if (isUnder6) {
+                    allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
+                } else {
+                    allowedRooms = localRooms;
+                }
+            } else if (adults === 2 && children >= 2) {
+                allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
+            } else if (children > 0 && isUnder6) {
+                allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
             }
-        } else if (adults === 2 && children >= 2) {
-            // Case 3: 2 Adults + 2+ Children -> Green Room only
-            allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
-        } else if (children > 0 && isUnder6) {
-            // Other Children Groups (e.g. 1 adult + children under 6) -> Green Room Only
-            allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
         }
 
         roomsContainer.innerHTML = '';
@@ -450,13 +513,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             let roomImg = room.img;
 
             // 1. Check if room is available for ALL days
+            let bookedOnTargetNight = false;
             for (const date of datesToStay) {
                 const dateStr = getStr(date);
-                if (scheduleData[room.id] && scheduleData[room.id][dateStr] === 'Booked') {
-                    isAvailable = false;
+                const status = scheduleData[room.id] ? scheduleData[room.id][dateStr] : null;
+                if (isBooked(status)) {
+                    bookedOnTargetNight = true;
+                    uiLog(`Room ${room.id}: Hidden (Actually Booked on ${dateStr}: ${status})`);
                     break;
                 }
             }
+
+            if (bookedOnTargetNight) return; // HIDDEN if actually booked
 
             // 2. Fetch Dynamic Pricing & Capacity
             const firstDate = datesToStay[0];
@@ -475,9 +543,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // Priority: 1. Gallery Sheet (Order 1) -> 2. Pricing Sheet -> 3. Local definition
             if (galleryData[room.id] && galleryData[room.id].length > 0) {
-                roomImg = galleryData[room.id][0].url;
+                // ALWAYS use image version for the card thumbnail
+                roomImg = convertGDriveUrl(galleryData[room.id][0].url, false);
             } else if (roomSheetData.img) {
-                roomImg = convertGDriveUrl(roomSheetData.img);
+                roomImg = convertGDriveUrl(roomSheetData.img, false);
             }
 
             // --- LEAD TIME & PERIOD LOGIC ---
@@ -492,39 +561,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             const isWithinPeriod = daysLead <= minDaysLead;
 
             // --- FILTERING LOGIC ---
-            if (isWithinPeriod) {
-                // WITHIN PERIOD: Ignore capacity/age for children. Only check existence of room in schedule.
-                // Standard capacity (adults) is handled at the aggregate level below.
+            const isOneNightStay = datesToStay.length === 1;
+            const nowAtLat = new Date();
+            const currentMonthId = nowAtLat.getMonth() + 1;
+            const currentYear = nowAtLat.getFullYear();
+            const isCurrentMonth = (checkin.getMonth() + 1 === currentMonthId) && (checkin.getFullYear() === currentYear);
+
+            if (isOneNightStay) {
+                // ONE NIGHT STAY POLICY (Simplified):
+                // If it passed the initial "isBooked" check for the target night, 
+                // we should show it. We still log if it's a gap filler for debugging.
+                const prevDate = new Date(checkin); prevDate.setDate(prevDate.getDate() - 1);
+                const nextDate = new Date(checkin); nextDate.setDate(nextDate.getDate() + 1);
+                const prevStr = getStr(prevDate);
+                const nextStr = getStr(nextDate);
+
+                const prevStatus = scheduleData[room.id] ? scheduleData[room.id][prevStr] : null;
+                const nextStatus = scheduleData[room.id] ? scheduleData[room.id][nextStr] : null;
+
+                let isGap = isBooked(prevStatus) && isBooked(nextStatus);
+                
+                if (isGap) {
+                    uiLog(`Room ${room.id}: Allowed (Gap Filler)`);
+                } else {
+                    uiLog(`Room ${room.id}: Allowed (Available)`);
+                }
+                isAvailable = true;
+            } else if (isWithinPeriod) {
+                // 2+ Nights within period -> OK
             } else {
-                // OUTSIDE PERIOD: Enforce all standard policies.
-
-                // A. Standard Guest Capacity Filter
-                // RELAXED: Don't hide rooms if adults > maxAdults, we check total capacity at confirmation
-                // if (adults > maxAdults) isAvailable = false;
-
-                // B. Standard Children Under 6 Policy Filter
+                // 2+ Nights outside period -> Enforce standard filters
                 if (children > 0) {
                     if (isUnder6 && kidsUnder6Allowed.toLowerCase() === "no") {
                         isAvailable = false;
                     }
                     if (children > maxChildren) isAvailable = false;
-                }
-
-                // C. Standard Gap-Filler Policy for 1st night
-                if (isAvailable && datesToStay.length === 1) {
-                    const prevDate = new Date(checkin); prevDate.setDate(prevDate.getDate() - 1);
-                    const nextDate = new Date(checkin); nextDate.setDate(nextDate.getDate() + 1);
-                    const prevStr = getStr(prevDate);
-                    const nextStr = getStr(nextDate);
-
-                    let isGap = false;
-                    if (scheduleData[room.id] && scheduleData[room.id][prevStr] === 'Booked' && scheduleData[room.id][nextStr] === 'Booked') {
-                        isGap = true;
-                    }
-
-                    if (!isGap) {
-                        isAvailable = false;
-                    }
                 }
             }
 
@@ -602,7 +673,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                      onclick='openGallery("${room.id}")'>
                     <img id="img-${room.id}" alt="${room.name}" 
                          class="w-full h-full object-cover transition-transform duration-700 group-hover/img:scale-110" 
-                         src="${roomImg}"/>
+                         src="${roomImg}"
+                         onerror="this.style.opacity='0'"/>
                     
                     <!-- Subtle Media Count Badge (Bottom Corner) -->
                     ${window.galleryData[room.id] ? `
@@ -719,9 +791,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 minDate.setDate(minDate.getDate() + 1);
                 checkoutInput.min = minDate.toISOString().split('T')[0];
 
-                // Automatically set checkout value to +2 days
+                // Automatically set checkout value to +1 day for 1-night stays by default
                 const defaultCheckout = new Date(ciDate);
-                defaultCheckout.setDate(defaultCheckout.getDate() + 2);
+                defaultCheckout.setDate(defaultCheckout.getDate() + 1);
                 checkoutInput.value = defaultCheckout.toISOString().split('T')[0];
             }
         });
@@ -841,48 +913,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // 1. Policy Check (1-night rule)
-            if (diffDays === 1) {
-                // Instant feedback: start shaking immediately
-                triggerModalWarningEffect();
-
-                if (isCheckingPolicy) return;
-                isCheckingPolicy = true;
-                try {
-                    const monthId = ciDate.getMonth() + 1;
-                    const today = new Date(); today.setHours(0, 0, 0, 0);
-                    const daysLead = Math.ceil((ciDate - today) / (1000 * 60 * 60 * 24));
-
-                    const STATIC_POLICY = { 1: 5, 2: 5, 3: 4, 4: 7, 5: 7, 6: 5, 7: 5, 8: 5, 9: 7, 10: 7, 11: 7, 12: 5 };
-                    let minDaysLead = (dynamicPolicyData && dynamicPolicyData.find(p => p.Month_ID === monthId))?.Min_Days_Lead || STATIC_POLICY[monthId] || 7;
-
-                    const isWithinPeriod = daysLead <= minDaysLead;
-
-                    if (!isWithinPeriod) {
-                        // If OUTSIDE period, check if it fills a gap
-                        let isGapPossible = false;
-                        const prevStr = getStr(new Date(ciDate.getTime() - 86400000));
-                        const nextStr = getStr(new Date(coDate.getTime()));
-                        for (const rId in scheduleData) {
-                            if (scheduleData[rId][prevStr] === 'Booked' && scheduleData[rId][nextStr] === 'Booked') {
-                                if (scheduleData[rId][ci] !== 'Booked') { isGapPossible = true; break; }
-                            }
-                        }
-                        if (!isGapPossible) {
-                            triggerModalWarningEffect("Chồn ưu tiên nhận đặt phòng từ 2 đêm. Với đặt phòng 1 đêm, vui lòng liên hệ Zalo.");
-                            isCheckingPolicy = false;
-                            return;
-                        }
-                    }
-                    // If isWithinPeriod, we allow it immediately (regardless of gap)
-                } catch (e) {
-                    console.error(e);
-                    triggerModalWarningEffect("Có lỗi khi kiểm tra chính sách. Vui lòng thử lại.");
-                    isCheckingPolicy = false;
-                    return;
-                }
-                finally { isCheckingPolicy = false; }
-            }
+            // 1. Policy Check (Relaxed for 1-night support)
+            // Removed strict filtering to allow guests to select and view 1-night stays
+            // as requested by the user.
 
             // 3. Child Age Validation (Sync with index.html)
             const modalAgeSelectors = modalAgeContainer.querySelectorAll('select');
@@ -1074,25 +1107,25 @@ function animateFly(startEl, targetEl, imgSrc, callback) {
     void clone.offsetWidth;
 
     flyContainer.appendChild(clone);
-
-    // Bắt đầu bay
-    requestAnimationFrame(() => {
-        // Ensure rects are fresh
-        const freshTargetRect = targetEl.getBoundingClientRect();
-        clone.style.top = `${freshTargetRect.top}px`;
-        clone.style.left = `${freshTargetRect.left}px`;
-        clone.style.width = `${freshTargetRect.width}px`;
-        clone.style.height = `${freshTargetRect.height}px`;
-        clone.style.opacity = '0.7';
-        clone.style.borderRadius = '8px';
-        clone.style.transform = 'scale(0.3)'; // Added shrink effect
-    });
+    // Bắt đầu bay - Thêm một chút delay nhỏ để đảm bảo Footer đã bắt đầu hiện
+    setTimeout(() => {
+        requestAnimationFrame(() => {
+            const freshTargetRect = targetEl.getBoundingClientRect();
+            clone.style.top = `${freshTargetRect.top}px`;
+            clone.style.left = `${freshTargetRect.left}px`;
+            clone.style.width = `${freshTargetRect.width}px`;
+            clone.style.height = `${freshTargetRect.height}px`;
+            clone.style.opacity = '0.7';
+            clone.style.borderRadius = '8px';
+            clone.style.transform = 'scale(0.3)';
+        });
+    }, 50);
 
     // Xóa clone sau khi bay xong
     setTimeout(() => {
         clone.remove();
         if (callback) callback();
-    }, 700);
+    }, 750);
 }
 
 // Override hàm selectRoom để hỗ trợ waitlist
@@ -1448,7 +1481,8 @@ function renderGalleryGrid() {
     gridView.innerHTML = `
         <div class="grid-layout">
             <div class="grid-item grid-feature" onclick="openDetail(0)">
-                <img src="${finalFeatureThumb}" loading="lazy" class="w-full h-full object-cover" />
+                <img src="${finalFeatureThumb}" loading="lazy" class="w-full h-full object-cover" 
+                     onerror="this.style.opacity='0'"/>
                 ${feature.type === 'video' ? `
                     <div class="video-play-icon">
                         <span class="material-symbols-outlined text-white text-6xl">play_circle</span>
@@ -1459,7 +1493,8 @@ function renderGalleryGrid() {
         const finalThumb = convertGDriveUrl(m.url, false, false, "w1024");
         return `
                 <div class="grid-item grid-secondary" onclick="openDetail(${i + 1})">
-                    <img src="${finalThumb}" loading="lazy" class="w-full h-full object-cover" />
+                    <img src="${finalThumb}" loading="lazy" class="w-full h-full object-cover" 
+                         onerror="this.style.opacity='0'"/>
                     ${m.type === 'video' ? `
                         <div class="video-play-icon">
                             <span class="material-symbols-outlined text-white text-4xl">play_circle</span>
@@ -1473,7 +1508,8 @@ function renderGalleryGrid() {
         const finalThumb = convertGDriveUrl(m.url, false, false, "w800");
         return `
                 <div class="grid-item grid-thumb" onclick="openDetail(${i + 3})">
-                    <img src="${finalThumb}" loading="lazy" class="w-full h-full object-cover" />
+                    <img src="${finalThumb}" loading="lazy" class="w-full h-full object-cover" 
+                         onerror="this.style.opacity='0'"/>
                     ${m.type === 'video' ? `
                         <div class="video-play-icon">
                             <span class="material-symbols-outlined text-white text-3xl">play_circle</span>
@@ -1508,8 +1544,34 @@ function updateDetailDisplay() {
     if (!container || !item) return;
 
     if (item.type === 'video') {
-        // Use inline style to ensure it overrides any 'width: auto' and takes maximum space
-        container.innerHTML = `<iframe src="${item.url}" class="gallery-media" style="width: 100%; height: 85vh; border: none;" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>`;
+        const isDirectVideo = item.url.includes('cloudinary.com') ||
+            item.url.match(/\.(mp4|webm|mov|m4v|ogv)/i);
+
+        if (isDirectVideo) {
+            const posterUrl = item.url.includes('cloudinary.com') ? convertGDriveUrl(item.url, false, false, "q_auto,f_auto,so_2") : "";
+            container.innerHTML = `
+                <video 
+                    controls 
+                    autoplay
+                    muted
+                    ${posterUrl ? `poster="${posterUrl}"` : ''}
+                    class="gallery-media animate-[fadeIn_0.5s_ease-out]" 
+                    style="width: 100%; height: 85vh; background: #000; border-radius: 8px;"
+                    playsinline>
+                    <source src="${item.url}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>`;
+        } else {
+            // Iframe for YouTube/GDrive
+            const finalUrl = convertGDriveUrl(item.url, true);
+            container.innerHTML = `<iframe 
+                src="${finalUrl}" 
+                class="gallery-media" 
+                style="width: 100%; height: 85vh; border: none;" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen 
+                referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+        }
     } else {
         // w1600 for instant mobile loading
         const highResUrl = convertGDriveUrl(item.url, false, true);
@@ -1533,7 +1595,8 @@ function updateDetailDisplay() {
             return `
             <div onclick="jumpToGallery(${idx})" 
                  class="w-14 h-14 flex-shrink-0 cursor-pointer border-2 transition-all duration-300 rounded overflow-hidden relative ${idx === currentGalleryIndex ? 'border-[#BF953F] ring-2 ring-[#BF953F]/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}">
-                <img src="${thumbUrl}" class="w-full h-full object-cover bg-slate-800 pointer-events-none"/>
+                <img src="${thumbUrl}" class="w-full h-full object-cover bg-slate-800 pointer-events-none"
+                     onerror="this.style.opacity='0'"/>
                 ${m.type === 'video' ? `
                     <div class="absolute inset-0 flex items-center justify-center bg-black/20 pointer-events-none">
                         <span class="material-symbols-outlined text-white text-xl">play_circle</span>
@@ -1581,5 +1644,6 @@ window.openDetail = openDetail;
 
 // Gọi loadReview sau khi page load
 document.addEventListener('DOMContentLoaded', () => {
+    console.log("Rooms script v11.16 loaded and active (Final Policy Fix).");
     setTimeout(loadReviews, 500);
 });
