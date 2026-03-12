@@ -70,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
     confirmBtn.addEventListener('click', () => {
         // Open Zalo with Template Message
         const message = `Chào Chồn, mình vừa đặt phòng ${roomData.name} từ ${formatDateObj(checkinDate)} đến ${formatDateObj(checkoutDate)}. Gửi Chồn biên lai chuyển khoản nhé!`;
-        const zaloUrl = `https://zalo.me/0369877478?text=${encodeURIComponent(message)}`;
+        const zaloUrl = `https://zalo.me/0889717713?text=${encodeURIComponent(message)}`;
         window.open(zaloUrl, '_blank');
 
         const phone = bookingData.phone || 'của bạn';

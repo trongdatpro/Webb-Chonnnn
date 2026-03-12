@@ -758,7 +758,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     <p class="text-center text-[#c8a96a] font-display italic text-xl px-4">
                         Hiện tại chỉ còn ${availableRoomsCount} phòng đơn đủ cho ${availableRoomsCount * 2} khách. <br class="hidden sm:block"> Xin vui lòng liên hệ Zalo để được hỗ trợ chi tiết.
                     </p>
-                    <a href="https://zalo.me/0369877478" target="_blank" class="mt-4 bg-primary text-white py-2 px-6 rounded-lg font-bold shadow-lg hover:scale-105 transition-transform uppercase text-sm">
+                    <a href="https://zalo.me/0889717713" target="_blank" class="mt-4 bg-primary text-white py-2 px-6 rounded-lg font-bold shadow-lg hover:scale-105 transition-transform uppercase text-sm">
                         Liên hệ Zalo
                     </a>
                 `;
@@ -1407,14 +1407,17 @@ function openGallery(roomId) {
                 @media (max-width: 480px) { .grid-thumbnails { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
                 .grid-thumb { aspect-ratio: 16/10; }
                 
-                .detail-container { position: fixed; inset: 0; background: black; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 0; }
+                .detail-container { position: fixed; inset: 0; background: black; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 0; overflow: hidden; }
                 .detail-container.active { display: flex; }
-                .gallery-media { max-width: 100vw; max-height: 100vh; width: auto; height: auto; min-height: 400px; object-fit: contain; }
-                .nav-btn, .detail-close-btn-bottom { background: rgba(0, 0, 0, 0.4); color: white; border: 1px solid rgba(255,255,255,0.2); width: 50px; height: 50px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(8px); transition: 0.3s; display: flex; align-items: center; justify-content: center; z-index: 220; }
+                .gallery-media { max-width: 100vw; max-height: calc(100vh - 180px); width: auto; height: auto; object-fit: contain; }
+                .nav-btn, .detail-close-btn-bottom { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); width: 56px; height: 56px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(8px); transition: 0.3s; display: flex; align-items: center; justify-content: center; z-index: 220; }
                 .nav-btn:hover, .detail-close-btn-bottom:hover { background: rgba(255,255,255,0.3); transform: scale(1.1); border-color: white; }
-                .detail-close-btn-bottom:hover { background: rgba(239, 68, 68, 0.4); } /* Reddish tint on hover for close */
+                .detail-close-btn-bottom:hover { background: rgba(239, 68, 68, 0.4); } 
                 
-                .gallery-header { position: sticky; top: 0; width: 100%; background: rgba(255, 250, 240, 0.95); backdrop-filter: blur(12px); z-index: 101; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-b: 1px solid rgba(191, 149, 63, 0.2); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+                .detail-footer-controls { position: absolute; bottom: 0; left: 0; right: 0; padding: 20px 0 30px; display: flex; flex-direction: column; align-items: center; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); z-index: 210; pointer-events: none; }
+                .detail-footer-controls > * { pointer-events: auto; }
+                
+                .gallery-header { position: sticky; top: 0; width: 100%; background: rgba(255, 250, 240, 0.95); backdrop-filter: blur(12px); z-index: 101; padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(191, 149, 63, 0.2); box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
                 .gallery-close-btn { color: #1a1a1a; cursor: pointer; border: 1px solid #c8a96a; padding: 8px; border-radius: 50%; transition: all 0.3s; display: flex; align-items: center; justify-content: center; }
                 .gallery-close-btn:hover { background: #c8a96a; color: white; }
                 
@@ -1436,22 +1439,23 @@ function openGallery(roomId) {
             <div id="detail-view" class="detail-container">
                 <div id="detail-media-container" class="w-full h-full flex items-center justify-center p-0"></div>
                 
-                <!-- Navigation & Close Buttons Area -->
-                <div class="flex gap-8 mt-4 mb-2 z-[210]">
-                    <button class="nav-btn" onclick="prevGallery()">
-                        <span class="material-symbols-outlined">chevron_left</span>
-                    </button>
-                    <button class="nav-btn" onclick="nextGallery()">
-                        <span class="material-symbols-outlined">chevron_right</span>
-                    </button>
-                    <!-- Close button repositioned to the right of the arrows -->
-                    <button class="detail-close-btn-bottom" onclick="closeGallery()">
-                        <span class="material-symbols-outlined">close</span>
-                    </button>
-                </div>
+                <div class="detail-footer-controls">
+                    <!-- Navigation & Close Buttons Area -->
+                    <div class="flex gap-8 mb-4 z-[210]">
+                        <button class="nav-btn" onclick="prevGallery()">
+                            <span class="material-symbols-outlined">chevron_left</span>
+                        </button>
+                        <button class="nav-btn" onclick="nextGallery()">
+                            <span class="material-symbols-outlined">chevron_right</span>
+                        </button>
+                        <button class="detail-close-btn-bottom" onclick="closeGallery()">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
 
-                <!-- Mini Thumb Bar -->
-                <div id="detail-thumbs" class="mt-4 flex gap-2 overflow-x-auto max-w-full px-4 scrollbar-hide h-16"></div>
+                    <!-- Mini Thumb Bar -->
+                    <div id="detail-thumbs" class="flex gap-2 overflow-x-auto max-w-full px-4 scrollbar-hide h-16"></div>
+                </div>
             </div>
         `;
         document.body.appendChild(modal);
@@ -1592,9 +1596,11 @@ function updateDetailDisplay() {
         thumbContainer.innerHTML = currentGallery.map((m, idx) => {
             // Use w300 for clearer thumbnails that are still fast
             const thumbUrl = convertGDriveUrl(m.url, false, false, "w300");
+            const isActive = idx === currentGalleryIndex;
             return `
             <div onclick="jumpToGallery(${idx})" 
-                 class="w-14 h-14 flex-shrink-0 cursor-pointer border-2 transition-all duration-300 rounded overflow-hidden relative ${idx === currentGalleryIndex ? 'border-[#BF953F] ring-2 ring-[#BF953F]/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}">
+                 ${isActive ? 'id="active-thumb"' : ''}
+                 class="w-14 h-14 flex-shrink-0 cursor-pointer border-2 transition-all duration-300 rounded overflow-hidden relative ${isActive ? 'border-[#BF953F] ring-2 ring-[#BF953F]/20 scale-105' : 'border-transparent opacity-60 hover:opacity-100'}">
                 <img src="${thumbUrl}" class="w-full h-full object-cover bg-slate-800 pointer-events-none"
                      onerror="this.style.opacity='0'"/>
                 ${m.type === 'video' ? `
@@ -1605,6 +1611,14 @@ function updateDetailDisplay() {
             </div>
         `;
         }).join('');
+
+        // Ensure active thumb is in view
+        setTimeout(() => {
+            const activeThumb = document.getElementById('active-thumb');
+            if (activeThumb) {
+                activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+            }
+        }, 50);
     }
 }
 
