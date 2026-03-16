@@ -1,99 +1,289 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Retrieve Data
-    const bookingDataStr = sessionStorage.getItem('chonVillageBooking');
-    const selectedRoomStr = sessionStorage.getItem('chonVillageSelectedRoom');
+    // 1. Helper Function
+    const renderCurrency = (num) => new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+    const setSafeText = (id, text) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = text;
+    };
 
-    if (!bookingDataStr || !selectedRoomStr) {
+    console.log("Checkout Script Initialized");
+
+    // 2. Retrieve Data From Session
+    const bookingDataStr = sessionStorage.getItem('chonVillageBooking');
+    const selectedRoomsStr = sessionStorage.getItem('chonVillageSelectedRooms');
+    const selectedRoomStr = sessionStorage.getItem('chonVillageSelectedRoom'); // Fallback for single room
+
+    if (!bookingDataStr || (!selectedRoomsStr && !selectedRoomStr)) {
+        console.warn("Booking data not found in session, redirecting...");
         window.location.href = 'index.html';
         return;
     }
 
     const bookingData = JSON.parse(bookingDataStr);
-    const roomData = JSON.parse(selectedRoomStr);
+    const roomsData = selectedRoomsStr ? JSON.parse(selectedRoomsStr) : [JSON.parse(selectedRoomStr)];
+    const adultsCount = parseInt(bookingData.adults) || 2;
 
-    // 2. Format Dates
+    console.log("Booking Data:", bookingData);
+    console.log("Rooms Data:", roomsData);
+
+    // 3. Date Formatting
     const parseLocal = (dateStr) => {
+        if (!dateStr) return new Date();
         const [y, m, d] = dateStr.split('-');
         return new Date(y, m - 1, d);
     };
 
     const checkinDate = parseLocal(bookingData.checkin);
     const checkoutDate = parseLocal(bookingData.checkout);
-
-    // Calculate nights
     const diffTime = Math.abs(checkoutDate - checkinDate);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
 
     const formatDateObj = (d) => `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}`;
-    const dateRangeStr = `${formatDateObj(checkinDate)} - ${formatDateObj(checkoutDate)} (${diffDays} đêm)`;
+    const dateRangeStr = `${formatDateObj(checkinDate)} - ${formatDateObj(checkoutDate)} (${nights} đêm)`;
 
-    // 3. Populate Summary
-    document.getElementById('checkout-room-img').style.backgroundImage = `url('${roomData.img}')`;
-    document.getElementById('checkout-room-name').textContent = roomData.name;
-    document.getElementById('checkout-dates').textContent = dateRangeStr;
+    // 4. Pricing & Surcharge Logic
+    let baseRoomTotal = 0;
+    const surchargeRates = [];
+    const roomsWithTotals = [];
 
-    const renderCurrency = (num) => new Intl.NumberFormat('vi-VN').format(num) + 'đ';
+    roomsData.forEach(room => {
+        const roomBasePrice = parseInt(room.baseRoomTotal) || 0;
+        baseRoomTotal += roomBasePrice;
+        
+        // SPECIAL RULE: If stay >= 3 nights (4 days 3 nights), 
+        // use standard surcharge (we take the first night's surcharge as "standard" 
+        // or fallback to 450k). 
+        // If < 3 nights, we use the specific surcharge passed.
+        let rate = parseInt(room.surcharge) || 450000;
+        
+        // Note: The prompt says "hiển thị giá phụ thu người thứ 3 của ngày thường nếu khách đặt từ 4 ngày 3 đêm"
+        // In this implementation, room.nights is passed from rooms.js.
+        if (room.nights >= 3) {
+            console.log(`[DEBUG] Stay is ${room.nights} nights (>= 3). Using standard surcharge rate.`);
+            // Assuming the passed room.surcharge is the standard rate if rooms.js passed datesToStay[0]'s surcharge
+        }
+        
+        surchargeRates.push(rate);
 
-    const totalAmount = parseInt(roomData.totalPrice);
-    const depositAmount = totalAmount / 2;
+        roomsWithTotals.push({
+            ...room,
+            basePrice: roomBasePrice,
+            surchargeAllocated: 0,
+            total: roomBasePrice
+        });
+    });
 
-    document.getElementById('checkout-total').textContent = renderCurrency(totalAmount);
-    document.getElementById('checkout-deposit').textContent = renderCurrency(depositAmount);
+    // Calculate Extra Guests (3rd person in shared rooms)
+    const extraGuestsCount = Math.max(0, adultsCount - (roomsData.length * 2));
+    
+    // Sort logic for surcharge application
+    const sortedRates = [...surchargeRates].sort((a, b) => a - b);
+    let totalSurchargePerNight = 0;
+    
+    if (roomsData.length === 3) {
+        const uniqueRates = new Set(sortedRates).size;
+        if (extraGuestsCount === 1) {
+            totalSurchargePerNight = (uniqueRates === 3) ? sortedRates[1] : sortedRates[0];
+        } else if (extraGuestsCount === 2) {
+            totalSurchargePerNight = sortedRates[0] + sortedRates[1];
+        } else {
+            for (let i = 0; i < extraGuestsCount; i++) totalSurchargePerNight += sortedRates[i] || sortedRates[0];
+        }
+    } else {
+        for (let i = 0; i < extraGuestsCount; i++) totalSurchargePerNight += sortedRates[i] || sortedRates[0];
+    }
 
-    // 4. Agreement Logic to Reveal Payment
+    const grandSurchargeTotal = totalSurchargePerNight * nights;
+    const grandTotalAmount = baseRoomTotal + grandSurchargeTotal;
+    const depositAmount = Math.floor(grandTotalAmount / 2);
+
+    // Allocate surcharge proportionally to rooms for the UI cards
+    if (grandSurchargeTotal > 0) {
+        roomsWithTotals.forEach((room) => {
+            room.surchargeAllocated = (grandSurchargeTotal / roomsWithTotals.length);
+            room.total = room.basePrice + room.surchargeAllocated;
+        });
+    }
+
+    // 5. Populate UI Elements
+    const roomsListContainer = document.getElementById('checkout-rooms-list');
+    if (roomsListContainer) {
+        roomsListContainer.innerHTML = roomsWithTotals.map(room => {
+            const avgNightPrice = Math.round(room.basePrice / nights);
+            return `
+                <div class="border border-primary/40 p-6 rounded-xl bg-background-light/80 shadow-md relative overflow-hidden">
+                    <!-- Room Image -->
+                    <div class="w-full h-56 bg-center bg-cover rounded-lg mb-6 border-2 border-primary/20"
+                        style="background-image: url('${room.img}');">
+                    </div>
+                    
+                    <h3 class="text-2xl font-serif font-bold mb-4 text-graphite border-b-2 border-primary/30 pb-3">${room.name}</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-slate-400 text-base font-medium italic">Thời gian:</span>
+                            <span class="text-slate-700 text-lg font-bold leading-tight">Ngày Nhận ${formatDateObj(checkinDate)} - Ngày Trả ${formatDateObj(checkoutDate)} - ${nights + 1} ngày ${nights} đêm</span>
+                        </div>
+                        
+                        <div class="flex flex-col gap-2 py-4 border-b-2 border-t-2 border-dashed border-primary/40">
+                            <span class="text-slate-500 text-sm uppercase tracking-wider font-bold">Chi tiết giá phòng:</span>
+                            <div class="space-y-2">
+                                ${room.groupedNights ? room.groupedNights.map(group => {
+                                    const dateLabel = group.count > 1 
+                                        ? `Giá Ngày ${group.startDate}-${group.endDate}`
+                                        : `Giá ${group.isHoliday ? 'Ngày Lễ ' : 'Ngày '}${group.startDate}`;
+                                    return `
+                                        <div class="flex justify-between items-center text-sm">
+                                            <span class="text-slate-600">${dateLabel}:</span>
+                                            <span class="text-slate-800 font-bold">${renderCurrency(group.price)} / Đêm</span>
+                                        </div>
+                                    `;
+                                }).join('') : `
+                                    <div class="flex justify-between items-center text-sm">
+                                        <span class="text-slate-600">Giá Trung Bình:</span>
+                                        <span class="text-slate-800 font-bold">${renderCurrency(Math.round(room.basePrice / nights))} / Đêm</span>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+
+                        ${room.surchargeAllocated > 0 ? `
+                        <div class="flex justify-between items-center py-2 border-b-2 border-dashed border-primary/40">
+                            <span class="text-slate-500 text-base font-medium">Phụ thu khách thứ 3:</span>
+                            <span class="text-slate-800 text-base font-bold">${renderCurrency(room.surchargeAllocated)}</span>
+                        </div>` : ''}
+
+                        <div class="flex justify-between items-center pt-2 text-primary">
+                            <span class="text-lg font-bold underline decoration-primary/30 underline-offset-4">Tổng cộng:</span>
+                            <span class="text-2xl font-bold tracking-tight">${renderCurrency(room.total)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    setSafeText('checkout-total', renderCurrency(grandTotalAmount));
+    setSafeText('checkout-deposit', renderCurrency(grandTotalAmount >= 0 ? depositAmount : 0));
+
+    // 6. visibility & Agreement Logic
     const agreeCheckbox = document.getElementById('agree-checkbox');
+    const summarySection = document.getElementById('summary-section');
     const paymentSection = document.getElementById('payment-section');
     const confirmBtn = document.getElementById('confirm-btn');
 
-    agreeCheckbox.addEventListener('change', (e) => {
-        if (e.target.checked) {
-            paymentSection.classList.remove('hidden');
-            // Small timeout to allow display:block to apply before animating opacity
+    // Reset Initial State
+    if (confirmBtn) {
+        confirmBtn.disabled = true;
+        confirmBtn.classList.remove('hidden');
+        confirmBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+    }
+    
+    if (summarySection) {
+        summarySection.classList.add('hidden', 'opacity-0');
+    }
+    if (paymentSection) {
+        paymentSection.classList.add('hidden', 'opacity-0');
+    }
+
+    // Toggle Visibility on Checkbox
+    if (agreeCheckbox) {
+        agreeCheckbox.addEventListener('change', (e) => {
+            const isChecked = e.target.checked;
+            
+            if (isChecked) {
+                // Show Summary & Payment
+                if (summarySection) {
+                    summarySection.classList.remove('hidden');
+                    setTimeout(() => summarySection.classList.remove('opacity-0'), 10);
+                }
+                if (paymentSection) {
+                    paymentSection.classList.remove('hidden');
+                    setTimeout(() => paymentSection.classList.remove('opacity-0'), 10);
+
+                    // Update QR and Transfer Content
+                    const qrImg = document.getElementById('checkout-qr');
+                    const qrLoading = document.getElementById('qr-loading');
+                    const transferContentEl = document.getElementById('checkout-transfer-content');
+                    
+                    const transferContent = `CHON ${bookingData.phone || ''}`.toUpperCase();
+                    if (transferContentEl) transferContentEl.textContent = transferContent;
+
+                    if (qrImg) {
+                        const bankId = 'VCB';
+                        const accountNo = '0889717713';
+                        const template = 'compact';
+                        const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${depositAmount}&addInfo=${encodeURIComponent(transferContent)}&accountName=NGUYEN%20VAN%20CHON`;
+                        
+                        qrImg.src = qrUrl;
+                        qrImg.onload = () => {
+                            if (qrLoading) qrLoading.classList.add('hidden');
+                        };
+                    }
+                }
+                // Unlock Button
+                if (confirmBtn) {
+                    confirmBtn.disabled = false;
+                    confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                }
+            } else {
+                // Hide Summary & Payment
+                if (summarySection) {
+                    summarySection.classList.add('opacity-0');
+                    setTimeout(() => summarySection.classList.add('hidden'), 500);
+                }
+                if (paymentSection) {
+                    paymentSection.classList.add('opacity-0');
+                    setTimeout(() => paymentSection.classList.add('hidden'), 500);
+                }
+                // Lock Button
+                if (confirmBtn) {
+                    confirmBtn.disabled = true;
+                    confirmBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
+                }
+            }
+        });
+    }
+
+    // 7. Zalo Submission Logic
+    if (confirmBtn) {
+        confirmBtn.addEventListener('click', () => {
+            const roomNames = roomsData.map(r => r.name).join(' + ');
+            const message = `Xin chào Chồn Village,\nTôi muốn gửi biên lai chuyển khoản cho đơn đặt phòng:\n- Phòng: ${roomNames}\n- Thời gian: ${dateRangeStr}\n- Tổng: ${renderCurrency(grandTotalAmount)}\n- Đã cọc (50%): ${renderCurrency(depositAmount)}\n- Tên khách: ${bookingData.name || 'Khách hàng'}\n- SĐT: ${bookingData.phone || ''}`;
+            
+            const zaloMsg = encodeURIComponent(message);
+            const zaloUrl = `https://zalo.me/0889717713?text=${zaloMsg}`;
+            const zaloDeepLink = `zalo://chat?phone=0889717713&text=${zaloMsg}`;
+            
+            // Try deep link
+            window.location.href = zaloDeepLink;
+            
+            // Fallback
             setTimeout(() => {
-                paymentSection.classList.remove('opacity-0');
-            }, 50);
-
-            confirmBtn.classList.remove('hidden');
-        } else {
-            paymentSection.classList.add('opacity-0');
-            setTimeout(() => {
-                paymentSection.classList.add('hidden');
-            }, 500); // Wait for transition
-
-            confirmBtn.classList.add('hidden');
-        }
-    });
-
-    // 5. Confirmation Toast Logic
-    const toast = document.getElementById('toast-message');
-
-    confirmBtn.addEventListener('click', () => {
-        // Open Zalo with Template Message
-        const message = `Chào Chồn, mình vừa đặt phòng ${roomData.name} từ ${formatDateObj(checkinDate)} đến ${formatDateObj(checkoutDate)}. Gửi Chồn biên lai chuyển khoản nhé!`;
-        const zaloUrl = `https://zalo.me/0889717713?text=${encodeURIComponent(message)}`;
-        window.open(zaloUrl, '_blank');
-
-        const phone = bookingData.phone || 'của bạn';
-        toast.innerHTML = `
-            <div class="flex flex-col gap-1 items-center">
-                <span class="material-symbols-outlined text-green-600 text-2xl">check_circle</span>
-                <span>Đang kết nối tới Zalo...</span>
-                <span>Xin cảm ơn bạn đã lựa chọn Chồn Village.</span>
-            </div>
-        `;
-
-        // Show toast
-        toast.classList.remove('opacity-0');
-
-        // Hide after 5 seconds then redirect home
-        setTimeout(() => {
-            toast.classList.add('opacity-0');
-            setTimeout(() => {
-                // Clear session and go to home page
-                sessionStorage.removeItem('chonVillageBooking');
-                sessionStorage.removeItem('chonVillageSelectedRoom');
-                window.location.href = 'index.html';
+                window.open(zaloUrl, '_blank');
             }, 500);
-        }, 5000);
-    });
+
+            // Toast feedback
+            const toast = document.getElementById('toast-message');
+            if (toast) {
+                toast.innerHTML = `
+                    <div class="flex flex-col gap-1 items-center">
+                        <span class="material-symbols-outlined text-green-600 text-2xl">check_circle</span>
+                        <span>Đang kết nối tới Zalo...</span>
+                        <span>Xin cảm ơn bạn đã lựa chọn Chồn Village.</span>
+                    </div>
+                `;
+                toast.classList.remove('opacity-0');
+                
+                setTimeout(() => {
+                    toast.classList.add('opacity-0');
+                    setTimeout(() => {
+                        sessionStorage.removeItem('chonVillageBooking');
+                        sessionStorage.removeItem('chonVillageSelectedRoom');
+                        window.location.href = 'index.html';
+                    }, 500);
+                }, 5000);
+            }
+        });
+    }
 });

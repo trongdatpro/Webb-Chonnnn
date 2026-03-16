@@ -23,10 +23,9 @@ const renderCurrency = (val) => {
 
 const isBooked = (s) => {
     if (!s) return false;
-    // Normalize both Unicode and whitespace
     const clean = String(s).normalize('NFC').trim().toLowerCase();
-    // Common indicators for a booked/unavailable room
-    return clean === 'booked' || clean === 'đã đặt' || clean === 'b' || clean.includes('đã đặt') || clean.includes('đặt');
+    if (clean.includes('hủy')) return false;
+    return clean.includes('đặt') || clean.includes('cọc') || clean.includes('thanh toán') || clean.includes('đóng') || clean.includes('booked') || clean === 'b';
 };
 
 const convertGDriveUrl = (url, isVideo = false, highRes = false, customSize = null) => {
@@ -47,19 +46,19 @@ const convertGDriveUrl = (url, isVideo = false, highRes = false, customSize = nu
     // --- Cloudinary Support ---
     if (url.includes('cloudinary.com')) {
         if (isVideo) return url;
-        
+
         let trans = customSize || (highRes ? "w_1600" : "w_800");
         // Normalize size param (e.g., w1600 -> w_1600)
         if (typeof trans === 'string' && trans.startsWith('w') && !trans.includes('_')) {
             trans = 'w_' + trans.substring(1);
         }
-        
+
         const finalTrans = `f_jpg,so_2,q_auto,${trans}`;
-        
+
         // Inject transformations right after /upload/
         // We do NOT capture the version string here to avoid breaking the URL
         return url.replace(/\/upload\//, `/upload/${finalTrans}/`)
-                  .replace(/\.(mp4|webm|mov|m4v|ogv)(\?.*)?$/i, '.jpg$2');
+            .replace(/\.(mp4|webm|mov|m4v|ogv)(\?.*)?$/i, '.jpg$2');
     }
 
     // --- Google Drive Support ---
@@ -198,21 +197,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     ];
 
     // 3. Fetch Google Sheets Data
-    const URL_PRICINGS = [
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=2054490170',
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=1006162975',
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=583502511', // T5
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=1084259420', // T6
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=1502542719', // T7
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=1606229783', // T8
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=489054922',  // T9
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=616215486',  // T10
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=222250592',  // T11
-        'https://docs.google.com/spreadsheets/d/1XluSzDsFCMCbgQHDjJTF7_mX7D4isUI9QbtwVCQXCbY/gviz/tq?gid=1120714568'  // T12
-    ];
     const URL_SCHEDULES = [
-        'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=1441677072',
-        'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=2011761073',
+        '', // T1 - Placeholder
+        '', // T2 - Placeholder
+        'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=1441677072', // T3
+        'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=2011761073', // T4
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=1564983873', // T5
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=1882992325', // T6
         'https://docs.google.com/spreadsheets/d/1A-DGSU4oPx74xdzloBQW4ekyhcjATwgh6dKf0Ky0XKg/gviz/tq?gid=682502335',  // T7
@@ -252,34 +241,28 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        const pricingPromises = URL_PRICINGS.map(url => fetchJSONP(url));
-        const schedulePromises = URL_SCHEDULES.map(url => fetchJSONP(url));
+        const schedulePromises = URL_SCHEDULES.filter(url => url).map(url => fetchJSONP(url));
 
         const allResponses = await Promise.all([
-            ...pricingPromises,
             ...schedulePromises,
             fetchJSONP(GALLERY_API + "&t=" + Date.now())
         ]);
 
-        const numPricing = URL_PRICINGS.length;
-        const numSchedule = URL_SCHEDULES.length;
-        const pricingResponses = allResponses.slice(0, numPricing);
-        const scheduleResponses = allResponses.slice(numPricing, numPricing + numSchedule);
-        const galleryRes = allResponses[numPricing + numSchedule];
+        const numSchedule = schedulePromises.length;
+        const scheduleResponses = allResponses.slice(0, numSchedule);
+        const galleryRes = allResponses[numSchedule];
         // Synchronize Policy first
         await syncPolicy();
 
-        // Check if AT LEAST ONE of the links succeeded for both Pricing and Schedule
-        const validPricing = pricingResponses.filter(res => res && res.table);
+        // Check if AT LEAST ONE link succeeded
         const validSchedule = scheduleResponses.filter(res => res && res.table);
 
         if (validSchedule.length === 0) {
             throw new Error("Proxy returned invalid HTML or no data instead of JSONP for Schedule links");
         }
 
-        // Parse Pricing and Schedule
-        console.log("Pricing JSONs received", pricingResponses);
-        console.log("Schedule JSONs received", scheduleResponses);
+        // Parse Unified Data
+        console.log("Unified Schedule/Pricing JSONs received", scheduleResponses);
 
         // 4. Parse Gallery Data
         window.galleryData = {};
@@ -313,25 +296,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         scheduleData = {};
         pricingData = {};
 
-        scheduleResponses.forEach((scheduleRes, index) => {
+        scheduleResponses.forEach((scheduleRes) => {
             if (!scheduleRes || !scheduleRes.table || !scheduleRes.table.rows) return;
-            const monthCounts = {};
-            scheduleRes.table.rows.forEach(row => {
-                if (!row.c || !row.c[0]) return;
-                const val = row.c[0].v;
-                const formatted = row.c[0].f;
-                let dStr = "";
-                if (typeof val === 'string' && val.startsWith('Date(')) {
-                    const parts = val.substring(5, val.length - 1).split(',');
-                    dStr = `${parts[0]}-${String(parseInt(parts[1]) + 1).padStart(2, '0')}`;
-                } else {
-                    const s = String(formatted || val).trim();
-                    if (s.length >= 7) dStr = s.substring(0, 7);
-                }
-                if (dStr) monthCounts[dStr] = (monthCounts[dStr] || 0) + 1;
-            });
-            const monthKey = Object.keys(monthCounts).reduce((a, b) => monthCounts[a] > monthCounts[b] ? a : b, null);
-
+            
             scheduleRes.table.rows.forEach(row => {
                 if (!row.c || row.c.length < 3) return;
                 const val = row.c[0] ? row.c[0].v : null;
@@ -345,72 +312,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const parts = val.substring(5, val.length - 1).split(',');
                     dateStr = `${parts[0]}-${String(parseInt(parts[1]) + 1).padStart(2, '0')}-${String(parseInt(parts[2])).padStart(2, '0')}`;
                 } else {
-                    // Robust normalization: truncate time and handle DD/MM/YYYY
-                    let s = String(formatted || val).trim().split(' ')[0]; // Truncate time "00:00:00"
+                    let s = String(formatted || val).trim().split(' ')[0];
                     if (s.includes('/')) {
                         const parts = s.split('/');
-                        if (parts[2] && parts[2].length === 4) { // DD/MM/YYYY
-                            dateStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                        } else if (parts[0] && parts[0].length === 4) { // YYYY/MM/DD
-                            dateStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                        }
+                        if (parts[2] && parts[2].length === 4) dateStr = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                        else if (parts[0] && parts[0].length === 4) dateStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
                     } else if (s.includes('-')) {
                         const parts = s.split('-');
-                        if (parts[0] && parts[0].length === 4) { // YYYY-MM-DD
-                            dateStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-                        }
+                        if (parts[0] && parts[0].length === 4) dateStr = `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
                     } else {
                         dateStr = s;
                     }
                 }
 
                 const cleanRid = String(rId).trim().replace(/ /g, '_');
+                
+                // Extraction helper for numeric/formatted values
+                const getVal = (cell, def = 0) => {
+                    if (!cell) return def;
+                    if (cell.v !== undefined && typeof cell.v === 'number') return cell.v;
+                    if (cell.f) return parseInt(cell.f.replace(/\./g, '')) || def;
+                    return parseInt(String(cell.v).replace(/\./g, '')) || def;
+                };
+
+                // Store Schedule
                 if (!scheduleData[cleanRid]) scheduleData[cleanRid] = {};
                 scheduleData[cleanRid][dateStr] = String(status).trim();
-                console.log(`[Parser Sync] Room: ${cleanRid}, Date: ${dateStr}, Status: ${status}`);
+
+                // Store Pricing, Capacity & Meta per date
+                if (!pricingData[cleanRid]) pricingData[cleanRid] = {};
+                pricingData[cleanRid][dateStr] = {
+                    maxAdults: getVal(row.c[3], 2),
+                    maxChildren: getVal(row.c[4], 2),
+                    kidsUnder6: String(row.c[5] ? row.c[5].v : "Yes").trim(),
+                    weekday: getVal(row.c[6], 800000),
+                    weekend: getVal(row.c[7], 1000000),
+                    surcharge: getVal(row.c[8], 450000),
+                    note: String(row.c[9] && row.c[9].v != null ? row.c[9].v : (row.c[9] && row.c[9].f ? row.c[9].f : "")).trim()
+                };
+                if (pricingData[cleanRid][dateStr].note) {
+                    console.log(`[DEBUG] Found Note for ${cleanRid} on ${dateStr}: "${pricingData[cleanRid][dateStr].note}"`);
+                }
             });
-
-            if (monthKey && pricingResponses[index] && pricingResponses[index].table) {
-                if (!pricingData[monthKey]) pricingData[monthKey] = {};
-                pricingResponses[index].table.rows.forEach(row => {
-                    if (!row.c || row.c.length < 6) return;
-                    const rId = row.c[0] ? row.c[0].v : null;
-                    if (!rId) return;
-                    const cleanRid = String(rId).trim().replace(/ /g, '_');
-
-                    const getPrice = (cell) => {
-                        if (!cell) return 0;
-                        if (cell.v !== undefined && typeof cell.v === 'number') return cell.v;
-                        if (cell.f) return parseInt(cell.f.replace(/\./g, '')) || 0;
-                        return parseInt(String(cell.v).replace(/\./g, '')) || 0;
-                    };
-
-                    let imgFromSheet = null;
-                    for (let i = 6; i <= 8; i++) {
-                        const cell = row.c[i];
-                        if (cell && cell.v && typeof cell.v === 'string' && cell.v.startsWith('http')) {
-                            imgFromSheet = convertGDriveUrl(cell.v.trim());
-                            break;
-                        }
-                    }
-
-                    const pInfo = {
-                        weekday: getPrice(row.c[4]),
-                        weekend: getPrice(row.c[5]),
-                        maxAdults: row.c[1] ? (typeof row.c[1].v === 'number' ? row.c[1].v : 2) : 2,
-                        maxChildren: row.c[2] ? (typeof row.c[2].v === 'number' ? row.c[2].v : 2) : 2,
-                        kidsUnder6: String(row.c[3] ? row.c[3].v : "Yes").trim(),
-                        img: imgFromSheet
-                    };
-
-                    pricingData[monthKey][cleanRid] = pInfo;
-                    if (!pricingData['default']) pricingData['default'] = {};
-                    if (!pricingData['default'][cleanRid]) pricingData['default'][cleanRid] = pInfo;
-                });
-            }
         });
 
-        uiLog("Pricing links valid:", validPricing.length);
         uiLog("Schedule links valid:", validSchedule.length);
 
         // Helper to loop dates (Checkin inclusive, Checkout exclusive)
@@ -421,30 +366,19 @@ document.addEventListener('DOMContentLoaded', async () => {
             curr.setDate(curr.getDate() + 1);
         }
 
-        const isOneNightStay = datesToStay.length === 1;
-        const nowAtLat = new Date();
-        const currentMonthId = nowAtLat.getMonth() + 1;
-        const currentYear = nowAtLat.getFullYear();
-        const isCurrentMonth = (checkinDate.getMonth() + 1 === currentMonthId) && (checkinDate.getFullYear() === currentYear);
-
         let allowedRooms = localRooms;
-        if (isOneNightStay && isCurrentMonth) {
-            // RELAXED: For 1-night stays in current month, check ALL rooms for Gap-Filler status
+        if (adults >= 3) {
             allowedRooms = localRooms;
-        } else {
-            if (adults >= 3) {
+        } else if (adults === 2 && children === 1) {
+            if (isUnder6) {
+                allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
+            } else {
                 allowedRooms = localRooms;
-            } else if (adults === 2 && children === 1) {
-                if (isUnder6) {
-                    allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
-                } else {
-                    allowedRooms = localRooms;
-                }
-            } else if (adults === 2 && children >= 2) {
-                allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
-            } else if (children > 0 && isUnder6) {
-                allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
             }
+        } else if (adults === 2 && children >= 2) {
+            allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
+        } else if (children > 0 && isUnder6) {
+            allowedRooms = localRooms.filter(r => r.id === 'Green_Room');
         }
 
         roomsContainer.innerHTML = '';
@@ -456,16 +390,14 @@ document.addEventListener('DOMContentLoaded', async () => {
         alert("Có lỗi kết nối hệ thống phòng: " + err.message);
         roomsContainer.innerHTML = '<p class="text-center text-amber-600 mb-4 bg-amber-50 rounded p-3">Không thể kết nối với dữ liệu phòng theo thời gian thực. Đang hiển thị danh sách phòng tiêu chuẩn.</p>';
 
-        // Fallback Pricing Data
+        // Fallback Pricing Data using the new roomId-first structure
         const fallbackPricingData = {
-            'default': {
-                'Pink_Room': { weekday: 700000, weekend: 800000 },
-                'Gray_Room': { weekday: 900000, weekend: 1000000 },
-                'Green_Room': { weekday: 1000000, weekend: 1100000 },
-                'Black_Room': { weekday: 1100000, weekend: 1200000 },
-                'White_Room': { weekday: 1200000, weekend: 1300000 },
-                'Gold_Room': { weekday: 1600000, weekend: 1600000 }
-            }
+            'Pink_Room': { 'default': { weekday: 700000, weekend: 800000 } },
+            'Gray_Room': { 'default': { weekday: 900000, weekend: 1000000 } },
+            'Green_Room': { 'default': { weekday: 1000000, weekend: 1100000 } },
+            'Black_Room': { 'default': { weekday: 1100000, weekend: 1200000 } },
+            'White_Room': { 'default': { weekday: 1200000, weekend: 1300000 } },
+            'Gold_Room': { 'default': { weekday: 1600000, weekend: 1600000 } }
         };
 
         let fallbackAllowedRooms = localRooms;
@@ -505,15 +437,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         roomsList.forEach(room => {
-            // Assess Availability and Calculate Price
+            // Assessment and Multi-night Price Calculation
             let isAvailable = true;
-            let firstNightWeekday = 0;
-            let firstNightWeekend = 0;
-            let finalPriceToPass = 0;
+            let totalRoomBasePrice = 0;
+            let isHolidayStay = false; 
             let roomImg = room.img;
 
-            // 1. Check if room is available for ALL days
+            // 1. Check if room is available for ALL days and sum the price
             let bookedOnTargetNight = false;
+            const nightlyDetails = [];
+
             for (const date of datesToStay) {
                 const dateStr = getStr(date);
                 const status = scheduleData[room.id] ? scheduleData[room.id][dateStr] : null;
@@ -522,34 +455,83 @@ document.addEventListener('DOMContentLoaded', async () => {
                     uiLog(`Room ${room.id}: Hidden (Actually Booked on ${dateStr}: ${status})`);
                     break;
                 }
+
+                const roomDayData = (pricingData[room.id] && pricingData[room.id][dateStr]) || {};
+                
+                // Track if any night in the stay is a holiday
+                const dayNote = (roomDayData.note || "").toLowerCase().normalize("NFC");
+                const isDayHoliday = /l[ễễe]/.test(dayNote) || dayNote.includes("holiday");
+
+                if (isDayHoliday) {
+                    isHolidayStay = true;
+                    console.log(`[DEBUG] Holiday detected on ${dateStr} for ${room.id} via note: "${roomDayData.note}"`);
+                }
+
+                const dow = date.getDay();
+                const isWe = (dow === 5 || dow === 6 || dow === 0);
+                const nightPrice = isWe ? (roomDayData.weekend || 1000000) : (roomDayData.weekday || 800000);
+                totalRoomBasePrice += nightPrice;
+
+                nightlyDetails.push({
+                    date: new Date(date),
+                    dateStr: dateStr,
+                    price: nightPrice,
+                    surcharge_val: roomDayData.surcharge || 450000,
+                    isHoliday: isDayHoliday,
+                    note: roomDayData.note || ""
+                });
+            }
+
+            // Group consecutive nights with identical price and holiday status
+            const groupedNights = [];
+            if (nightlyDetails.length > 0) {
+                let currentGroup = {
+                    startDate: nightlyDetails[0].date,
+                    endDate: nightlyDetails[0].date,
+                    price: nightlyDetails[0].price,
+                    isHoliday: nightlyDetails[0].isHoliday,
+                    count: 1
+                };
+
+                for (let i = 1; i < nightlyDetails.length; i++) {
+                    const night = nightlyDetails[i];
+                    if (night.price === currentGroup.price && night.isHoliday === currentGroup.isHoliday) {
+                        currentGroup.endDate = night.date;
+                        currentGroup.count++;
+                    } else {
+                        groupedNights.push(currentGroup);
+                        currentGroup = {
+                            startDate: night.date,
+                            endDate: night.date,
+                            price: night.price,
+                            isHoliday: night.isHoliday,
+                            count: 1
+                        };
+                    }
+                }
+                groupedNights.push(currentGroup);
             }
 
             if (bookedOnTargetNight) return; // HIDDEN if actually booked
-
-            // 2. Fetch Dynamic Pricing & Capacity
+            
+            // 2. Fetch Display Data from first stay night (or fallback)
             const firstDate = datesToStay[0];
             const firstDateStr = getStr(firstDate);
-            const monthKey = firstDateStr.substring(0, 7);
-            const currentMonthPricing = pricingData[monthKey] || pricingData['default'] || {};
-            const roomSheetData = currentMonthPricing[room.id] || {};
+            const roomDayData = (pricingData[room.id] && pricingData[room.id][firstDateStr]) || (pricingData[room.id] && pricingData[room.id]['default']) || {};
 
-            // Dynamic Values with Fallbacks
-            const maxAdults = roomSheetData.maxAdults !== undefined ? roomSheetData.maxAdults : 2;
-            const maxChildren = roomSheetData.maxChildren !== undefined ? roomSheetData.maxChildren : 2;
-            const kidsUnder6Allowed = roomSheetData.kidsUnder6 || "Yes";
-
-            firstNightWeekday = roomSheetData.weekday || 800000;
-            firstNightWeekend = roomSheetData.weekend || 1000000;
+            const isHoliday = isHolidayStay;
+            if (isHoliday) console.log(`[DEBUG] Final decision for ${room.id}: HOLIDAY DISPLAY ACTIVE`);
+            
+            const maxAdults = roomDayData.maxAdults !== undefined ? roomDayData.maxAdults : 2;
+            const maxChildren = roomDayData.maxChildren !== undefined ? roomDayData.maxChildren : 2;
+            const kidsUnder6Allowed = roomDayData.kidsUnder6 || "Yes";
 
             // Priority: 1. Gallery Sheet (Order 1) -> 2. Pricing Sheet -> 3. Local definition
             if (galleryData[room.id] && galleryData[room.id].length > 0) {
-                // ALWAYS use image version for the card thumbnail
                 roomImg = convertGDriveUrl(galleryData[room.id][0].url, false);
-            } else if (roomSheetData.img) {
-                roomImg = convertGDriveUrl(roomSheetData.img, false);
             }
 
-            // --- LEAD TIME & PERIOD LOGIC ---
+            // --- LEAD TIME & PERIOD LOGIC (Simplified) ---
             const checkin = datesToStay[0];
             const today = new Date(); today.setHours(0, 0, 0, 0);
             const daysLead = Math.ceil((checkin - today) / (1000 * 60 * 60 * 24));
@@ -562,50 +544,43 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             // --- FILTERING LOGIC ---
             const isOneNightStay = datesToStay.length === 1;
-            const nowAtLat = new Date();
-            const currentMonthId = nowAtLat.getMonth() + 1;
-            const currentYear = nowAtLat.getFullYear();
-            const isCurrentMonth = (checkin.getMonth() + 1 === currentMonthId) && (checkin.getFullYear() === currentYear);
 
             if (isOneNightStay) {
-                // ONE NIGHT STAY POLICY (Simplified):
-                // If it passed the initial "isBooked" check for the target night, 
-                // we should show it. We still log if it's a gap filler for debugging.
-                const prevDate = new Date(checkin); prevDate.setDate(prevDate.getDate() - 1);
-                const nextDate = new Date(checkin); nextDate.setDate(nextDate.getDate() + 1);
-                const prevStr = getStr(prevDate);
-                const nextStr = getStr(nextDate);
+                // 1-Night Rules: Must be either within the Last Minute period OR a perfect Gap-Filler (Checkout date is Booked)
+                const checkinStr = getStr(checkin);
+                const ciDate = new Date(checkin);
 
-                const prevStatus = scheduleData[room.id] ? scheduleData[room.id][prevStr] : null;
-                const nextStatus = scheduleData[room.id] ? scheduleData[room.id][nextStr] : null;
+                // Get next night (this is the checkout date for a 1-night stay)
+                const nextDate = new Date(ciDate);
+                nextDate.setDate(nextDate.getDate() + 1);
+                const nextDateStr = getStr(nextDate);
 
-                let isGap = isBooked(prevStatus) && isBooked(nextStatus);
-                
-                if (isGap) {
-                    uiLog(`Room ${room.id}: Allowed (Gap Filler)`);
-                } else {
-                    uiLog(`Room ${room.id}: Allowed (Available)`);
-                }
-                isAvailable = true;
-            } else if (isWithinPeriod) {
-                // 2+ Nights within period -> OK
-            } else {
-                // 2+ Nights outside period -> Enforce standard filters
-                if (children > 0) {
-                    if (isUnder6 && kidsUnder6Allowed.toLowerCase() === "no") {
-                        isAvailable = false;
+                const statusNext = scheduleData[room.id] ? scheduleData[room.id][nextDateStr] : null;
+
+                const isGapFiller = isBooked(statusNext);
+
+                if (isWithinPeriod || isGapFiller) {
+                    isAvailable = true;
+                    // Run child capacity checks even if it's 1-night
+                    if (children > 0) {
+                        if (isUnder6 && kidsUnder6Allowed.toLowerCase() === "no") isAvailable = false;
+                        if (children > maxChildren) isAvailable = false;
                     }
+                } else {
+                    isAvailable = false;
+                    uiLog(`Room ${room.id}: Hidden (1-Night Not In Period & Checkout Not Booked)`);
+                }
+            } else if (isWithinPeriod) {
+                // OK - Multiple nights within period
+            } else {
+                // Multiple nights outside period -> Capacity checks
+                if (children > 0) {
+                    if (isUnder6 && kidsUnder6Allowed.toLowerCase() === "no") isAvailable = false;
                     if (children > maxChildren) isAvailable = false;
                 }
             }
 
-            // RECOVERY REQUIREMENT: Hide room if not available (Schedule check)
             if (!isAvailable) return;
-
-            // Final Price Selection
-            const dayOfWeek = firstDate.getDay();
-            const isWeekend = (dayOfWeek === 5 || dayOfWeek === 6 || dayOfWeek === 0);
-            finalPriceToPass = isWeekend ? firstNightWeekend : firstNightWeekday;
 
             // Build Room Card HTML
             const specialAttrHtml = room.special ? `
@@ -624,35 +599,61 @@ document.addEventListener('DOMContentLoaded', async () => {
                 </div>
             `).join('');
 
-            const isAlreadySelected = selectedRooms.some(r => r.id === room.id);
-            const surchargeMessages = {
-                'Pink_Room': 'Phòng đơn 2 khách - Phụ thu khách thứ 3 từ 15 tuổi 450/người/đêm không extra bed',
-                'Gray_Room': 'Phòng đơn 2 khách - Phụ thu khách thứ 3 từ 15 tuổi 450/người/đêm không extra bed',
-                'Green_Room': 'Phòng đơn 2 khách - Phụ thu khách thứ 3 từ 15 tuổi 450/người/đêm không extra bed',
-                'White_Room': 'Phòng đơn 2 khách - Phụ thu khách thứ 3 từ 15 tuổi 550/người/đêm không extra bed',
-                'Black_Room': 'Phòng đơn 2 khách - Phụ thu khách thứ 3 từ 15 tuổi 550/người/đêm có extra bed',
-                'Gold_Room': 'Phòng đơn 2 khách - Phụ thu khách thứ 3 từ 15 tuổi 650/người/đêm không extra bed'
-            };
-            const surchargeText = surchargeMessages[room.id] || "";
+            const isAlreadySelected = selectedRooms.some(r => String(r.id) === String(room.id));
+            
+            // Determine Surcharge for display and for selection
+            // If nights >= 3, use standard (weekday) surcharge
+            let selectedSurcharge = roomDayData.surcharge || 450000;
+            if (datesToStay.length >= 3) {
+                // Find a non-holiday surcharge in the stay details
+                const weekdayNight = nightlyDetails.find(n => !n.isHoliday);
+                if (weekdayNight) {
+                    selectedSurcharge = weekdayNight.surcharge_val || 450000; // I need to make sure surcharge is in nightlyDetails
+                }
+            } else {
+                selectedSurcharge = roomDayData.surcharge || 450000;
+            }
 
-            const priceHtml = `
-                    <div class="flex flex-col gap-0.5 -ml-3">
-                        <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
-                        <div class="flex items-baseline gap-1 whitespace-nowrap">
-                            <span class="text-[15px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekday)}</span>
-                            <span class="text-[12px] font-normal text-slate-500">/ Đêm Trong Tuần (Thứ 2 - Thứ 5)</span>
-                        </div>
-                        <div class="flex items-baseline gap-1 whitespace-nowrap">
-                            <span class="text-[15px] font-bold text-graphite leading-none">${renderCurrency(firstNightWeekend)}</span>
-                            <span class="text-[12px] font-normal text-slate-500">/ Đêm Cuối Tuần (Thứ 6 - Chủ Nhật)</span>
-                        </div>
-                        <p class="text-[12px] sm:text-[13px] text-black font-bold mt-1.5">${surchargeText}</p>
-                    </div>`;
+            const surchargeText = `Phòng tiêu chuẩn 2 khách - Phụ thu khách thứ 3: ${renderCurrency(selectedSurcharge)}đ/đêm`;
+
+            // Pricing Breakdown Display
+            let priceHtml = "";
+            const formatDateShort = (d) => `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+            
+            priceHtml = `
+                <div class="flex flex-col gap-0.5 -ml-3">
+                    <p class="text-[11px] text-slate-400 uppercase tracking-tight mb-1">Giá Niêm Yết</p>
+                    <div class="space-y-1">
+                        ${groupedNights.map(group => {
+                            const dateLabel = group.count > 1 
+                                ? `Giá Ngày ${formatDateShort(group.startDate)}-${formatDateShort(group.endDate)}`
+                                : `Giá ${group.isHoliday ? 'Ngày Lễ ' : 'Ngày '}${formatDateShort(group.startDate)}`;
+                            return `
+                                <div class="flex items-baseline gap-1 whitespace-nowrap">
+                                    <span class="text-[12px] font-normal text-slate-500">${dateLabel} :</span>
+                                    <span class="text-[15px] font-bold text-graphite leading-none">${renderCurrency(group.price)}</span>
+                                    <span class="text-[12px] font-normal text-slate-500">/ 1 Đêm</span>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                    <p class="text-[12px] sm:text-[13px] text-black font-bold mt-1.5">${surchargeText}</p>
+                </div>`;
 
             const buttonHtml = `
                     <div class="relative p-[3px] rounded-xl bg-gradient-to-b from-[#BF953F] via-[#FCF6BA] to-[#AA771C] shadow-lg shadow-black/20 group/btn active:scale-95 transition-transform duration-300">
                         <div class="p-[1px] rounded-[9px] bg-gradient-to-b from-[#AA771C] via-[#FCF6BA] to-[#BF953F]">
-                            <button data-room-id="${room.id}" onclick='selectRoom(this, ${JSON.stringify({ id: room.id, name: room.name, img: roomImg, totalPrice: finalPriceToPass })})' 
+                            <button data-room-id="${room.id}" onclick='selectRoom(this, ${JSON.stringify({ 
+                                id: room.id, 
+                                name: room.name, 
+                                img: roomImg, 
+                                baseRoomTotal: totalRoomBasePrice, 
+                                img: roomImg, 
+                                baseRoomTotal: totalRoomBasePrice, 
+                                nights: datesToStay.length,
+                                surcharge: selectedSurcharge,
+                                groupedNights: groupedNights.map(g => ({...g, startDate: formatDateShort(g.startDate), endDate: formatDateShort(g.endDate)}))
+                            })})' 
                                 class="${isAlreadySelected ? 'bg-[#A0824B] text-white pointer-events-none' : 'bg-primary text-white'} hover:bg-[#A0824B] font-sans tracking-wider font-bold text-[15px] sm:text-[16px] py-2.5 px-8 rounded-[8px] transition-all duration-500 flex items-center justify-center leading-none uppercase w-full whitespace-nowrap">
                                 ${isAlreadySelected ? 'Đã Chọn' : 'Chọn Phòng'}
                             </button>
@@ -728,6 +729,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Lead time period check again for capacity message
         const checkin = datesToStay[0];
+        const checkinStr = getStr(checkin);
         const today = new Date(); today.setHours(0, 0, 0, 0);
         const daysLead = Math.ceil((checkin - today) / (1000 * 60 * 60 * 24));
         const monthId = checkin.getMonth() + 1;
@@ -735,14 +737,30 @@ document.addEventListener('DOMContentLoaded', async () => {
         let minDaysLead = (dynamicPolicyData && dynamicPolicyData.find(p => p.Month_ID === monthId))?.Min_Days_Lead || STATIC_POLICY[monthId] || 7;
         const isWithinPeriod = daysLead <= minDaysLead;
 
+        let totalAvailableOnCheckin = 0;
+        if (scheduleData) {
+            Object.keys(scheduleData).forEach(roomId => {
+                const statusCi = scheduleData[roomId][checkinStr];
+                if (!isBooked(statusCi)) totalAvailableOnCheckin++;
+            });
+        }
+
         const roomsNeeded = Math.ceil(adults / 2);
 
         if (availableRoomsCount === 0) {
             if (availableRoomsMessage) availableRoomsMessage.classList.add('hidden');
+
+            const isOneNightStay = datesToStay.length === 1;
+            let msg = "Ngày mà bạn chọn đã hết phòng, xin vui lòng đổi ngày khác.";
+
+            if (isOneNightStay && !isWithinPeriod && totalAvailableOnCheckin > 0) {
+                msg = "Chồn ưu tiên nhận đặt phòng từ 2 đêm. Với đặt phòng 1 đêm, vui lòng liên hệ Zalo.";
+            }
+
             roomsContainer.innerHTML = `
-                <div id="no-rooms-alert" class="col-span-full flex flex-col items-center justify-center space-y-4 my-16 animate-shake animate-pop">
+                <div id="no-rooms-alert" class="col-span-full flex flex-col items-center justify-center space-y-4 my-16 animate-shake animate-pop px-4">
                     <span class="material-symbols-outlined text-4xl text-slate-300">event_busy</span>
-                    <p class="text-center text-[#c8a96a] font-display italic text-xl">Ngày mà bạn chọn đã hết phòng, xin vui lòng đổi ngày khác.</p>
+                    <p class="text-center text-[#c8a96a] font-display italic text-xl">${msg}</p>
                 </div>
             `;
         } else {
@@ -791,9 +809,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 minDate.setDate(minDate.getDate() + 1);
                 checkoutInput.min = minDate.toISOString().split('T')[0];
 
-                // Automatically set checkout value to +1 day for 1-night stays by default
+                // Automatically set checkout value to +2 days by default
                 const defaultCheckout = new Date(ciDate);
-                defaultCheckout.setDate(defaultCheckout.getDate() + 1);
+                defaultCheckout.setDate(defaultCheckout.getDate() + 2);
                 checkoutInput.value = defaultCheckout.toISOString().split('T')[0];
             }
         });
@@ -913,9 +931,118 @@ document.addEventListener('DOMContentLoaded', async () => {
                 return;
             }
 
-            // 1. Policy Check (Relaxed for 1-night support)
-            // Removed strict filtering to allow guests to select and view 1-night stays
-            // as requested by the user.
+            // 1-NIGHT POLICY SYNC (Modal Edition)
+            if (diffDays === 1) {
+                try {
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const daysLead = Math.ceil((ciDate - today) / (1000 * 60 * 60 * 24));
+                    const monthId = ciDate.getMonth() + 1;
+
+                    // Fetch Dynamic Policy (using existing global POLICY_API)
+                    const policyResponse = await fetchJSONP(POLICY_API);
+                    let minDaysLead = 7;
+                    if (policyResponse && policyResponse.table && policyResponse.table.rows) {
+                        const colMonth = 0; const colMinDays = 1;
+                        const parsedPolicy = policyResponse.table.rows.map(row => ({
+                            Month_ID: row.c[colMonth] ? row.c[colMonth].v : null,
+                            Min_Days_Lead: row.c[colMinDays] ? row.c[colMinDays].v : null
+                        }));
+                        const mPolicy = parsedPolicy.find(p => p.Month_ID === monthId);
+                        if (mPolicy && mPolicy.Min_Days_Lead !== null) {
+                            minDaysLead = mPolicy.Min_Days_Lead;
+                        }
+                    }
+
+                    if (daysLead > minDaysLead) {
+                        // Fetch Schedule
+                        const scheduleResponse = await fetchJSONP(URL_SCHEDULES[monthId - 1]);
+                        const checkoutMonthId = coDate.getMonth() + 1;
+                        const checkoutScheduleResponse = (checkoutMonthId !== monthId) ? await fetchJSONP(URL_SCHEDULES[checkoutMonthId - 1]) : scheduleResponse;
+
+                        if (scheduleResponse && scheduleResponse.table && scheduleResponse.table.rows && checkoutScheduleResponse) {
+                            const getStr = d => {
+                                const yy = d.getFullYear(); const mm = String(d.getMonth() + 1).padStart(2, '0'); const dd = String(d.getDate()).padStart(2, '0');
+                                return `${yy}-${mm}-${dd}`;
+                            };
+                            const ciStr = getStr(ciDate);
+                            const coStr = getStr(coDate);
+
+                            const parseDateStr = (val, formatted) => {
+                                if (typeof val === 'string' && val.startsWith('Date(')) {
+                                    const parts = val.substring(5, val.length - 1).split(',');
+                                    return `${parts[0]}-${String(parseInt(parts[1]) + 1).padStart(2, '0')}-${String(parseInt(parts[2])).padStart(2, '0')}`;
+                                }
+                                let s = String(formatted || val).trim().split(' ')[0];
+                                if (s.includes('/')) {
+                                    const parts = s.split('/');
+                                    if (parts[2] && parts[2].length === 4) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                    if (parts[0] && parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                                } else if (s.includes('-')) {
+                                    const parts = s.split('-');
+                                    if (parts[0] && parts[0].length === 4) return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+                                }
+                                return s;
+                            };
+
+                            const ciStatuses = {};
+                            const coStatuses = {};
+
+                            const processSheet = (res, targetMap) => {
+                                res.table.rows.forEach(row => {
+                                    if (!row.c || row.c.length < 3) return;
+                                    const val = row.c[0] ? row.c[0].v : null;
+                                    const formatted = row.c[0] ? row.c[0].f : null;
+                                    const rId = row.c[1] ? row.c[1].v : null;
+                                    const status = row.c[2] ? row.c[2].v : null;
+                                    if (!val || !rId || !status) return;
+
+                                    const dateStr = parseDateStr(val, formatted);
+                                    const cleanRid = String(rId).trim().replace(/ /g, '_');
+                                    if (!targetMap[cleanRid]) targetMap[cleanRid] = {};
+                                    targetMap[cleanRid][dateStr] = String(status).trim();
+                                });
+                            };
+
+                            processSheet(scheduleResponse, ciStatuses);
+                            if (checkoutMonthId !== monthId) {
+                                processSheet(checkoutScheduleResponse, coStatuses);
+                            } else {
+                                Object.assign(coStatuses, ciStatuses);
+                            }
+
+                            let hasAvailableRoomsOnCheckin = false;
+                            let hasValidGapRoom = false;
+
+                            const isBooked = (status) => {
+                                if (!status) return false;
+                                const s = String(status).toLowerCase();
+                                if (s.includes('hủy')) return false;
+                                return s.includes('đặt') || s.includes('cọc') || s.includes('thanh toán') || s.includes('đóng') || s.includes('booked') || s === 'b';
+                            };
+
+                            Object.keys(ciStatuses).forEach(roomId => {
+                                const statusCi = ciStatuses[roomId][ciStr];
+                                let statusCo = null;
+                                if (coStatuses[roomId]) statusCo = coStatuses[roomId][coStr];
+
+                                if (!isBooked(statusCi)) {
+                                    hasAvailableRoomsOnCheckin = true;
+                                    if (isBooked(statusCo)) hasValidGapRoom = true;
+                                }
+                            });
+
+                            if (hasAvailableRoomsOnCheckin && !hasValidGapRoom) {
+                                triggerModalWarningEffect("Chồn ưu tiên nhận đặt phòng từ 2 đêm. Với đặt phòng 1 đêm, vui lòng liên hệ Zalo.");
+                                return; // BLOCK submission
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error checking gap filler on modal", e);
+                }
+            }
+
 
             // 3. Child Age Validation (Sync with index.html)
             const modalAgeSelectors = modalAgeContainer.querySelectorAll('select');
@@ -1140,7 +1267,18 @@ window.selectRoom = function (btn, roomData) {
     btn.classList.remove('bg-primary');
 
     // 3. Thêm vào mảng local
-    selectedRooms.push(roomData);
+    // Include surcharge and notes for checkout page calculation
+    // SPECIAL RULE: If stay >= 3 nights (4 days 3 nights), the surcharge is already handled or we use roomData.surcharge
+    let finalSurcharge = roomData.surcharge || 450000;
+    
+    if (roomData.nights >= 3) {
+        console.log(`[DEBUG] Stay >= 3 nights (${roomData.nights}). Surcharge used: ${finalSurcharge}`);
+    }
+
+    selectedRooms.push({
+        ...roomData,
+        surcharge: finalSurcharge
+    });
 
     // 4. Render lại waitlist để tạo placeholder
     renderWaitlist();
@@ -1407,7 +1545,7 @@ function openGallery(roomId) {
                 @media (max-width: 480px) { .grid-thumbnails { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); } }
                 .grid-thumb { aspect-ratio: 16/10; }
                 
-                .detail-container { position: fixed; inset: 0; background: black; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 0; overflow: hidden; }
+                .detail-container { position: fixed; inset: 0; background: black; z-index: 200; display: none; flex-direction: column; align-items: center; justify-content: flex-start; padding: 0; overflow: hidden; }
                 .detail-container.active { display: flex; }
                 .gallery-media { max-width: 100vw; max-height: calc(100vh - 180px); width: auto; height: auto; object-fit: contain; }
                 .nav-btn, .detail-close-btn-bottom { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255,255,255,0.2); width: 56px; height: 56px; border-radius: 50%; cursor: pointer; backdrop-filter: blur(8px); transition: 0.3s; display: flex; align-items: center; justify-content: center; z-index: 220; }
@@ -1431,13 +1569,13 @@ function openGallery(roomId) {
                     <span class="material-symbols-outlined">close</span>
                 </div>
             </div>
-
+ 
             <div id="grid-view" class="grid-container animate-[fadeIn_0.5s_ease-out]">
                 <!-- Grid items injected here -->
             </div>
-
+ 
             <div id="detail-view" class="detail-container">
-                <div id="detail-media-container" class="w-full h-full flex items-center justify-center p-0"></div>
+                <div id="detail-media-container" class="w-full h-full flex items-start justify-center p-0 pt-2"></div>
                 
                 <div class="detail-footer-controls">
                     <!-- Navigation & Close Buttons Area -->
