@@ -154,8 +154,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>` : ''}
 
                         <div class="flex justify-between items-center pt-2 text-primary">
-                            <span class="text-base font-bold">Tổng cộng:</span>
-                            <span class="text-base font-bold tracking-tight">${renderCurrency(room.total)}</span>
+                            <span class="text-base font-serif font-bold">Tổng cộng:</span>
+                            <span class="text-base font-serif font-bold tracking-tight">${renderCurrency(room.total)}</span>
                         </div>
                     </div>
                 </div>
