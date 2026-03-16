@@ -117,31 +117,31 @@ document.addEventListener('DOMContentLoaded', () => {
                         style="background-image: url('${room.img}');">
                     </div>
                     
-                    <h3 class="text-2xl font-serif font-bold mb-4 text-graphite border-b-2 border-primary/30 pb-3">${room.name}</h3>
+                    <h3 class="text-2xl font-serif font-bold mb-4 text-black border-b-2 border-primary/30 pb-3">${room.name}</h3>
                     
                     <div class="space-y-4">
                         <div class="flex flex-col gap-0.5">
-                            <span class="text-slate-400 text-base font-medium italic">Thời gian:</span>
-                            <span class="text-slate-700 text-lg font-bold leading-tight">Ngày Nhận ${formatDateObj(checkinDate)} - Ngày Trả ${formatDateObj(checkoutDate)} - ${nights + 1} ngày ${nights} đêm</span>
+                            <span class="text-black text-sm font-medium italic">Thời gian:</span>
+                            <span class="text-black text-sm font-bold leading-tight">Ngày Nhận ${formatDateObj(checkinDate)} - Ngày Trả ${formatDateObj(checkoutDate)} - ${nights + 1} ngày ${nights} đêm</span>
                         </div>
                         
                         <div class="flex flex-col gap-2 py-4 border-b-2 border-t-2 border-dashed border-primary/40">
-                            <span class="text-slate-500 text-sm uppercase tracking-wider font-bold">Chi tiết giá phòng:</span>
-                            <div class="space-y-2">
+                            <span class="text-black text-sm uppercase tracking-wider font-bold">Chi tiết giá phòng:</span>
+                            <div class="space-y-3">
                                 ${room.groupedNights ? room.groupedNights.map(group => {
                                     const dateLabel = group.count > 1 
                                         ? `Giá Ngày ${group.startDate}-${group.endDate}`
                                         : `Giá ${group.isHoliday ? 'Ngày Lễ ' : 'Ngày '}${group.startDate}`;
                                     return `
-                                        <div class="flex justify-between items-center text-sm">
-                                            <span class="text-slate-600">${dateLabel}:</span>
-                                            <span class="text-slate-800 font-bold">${renderCurrency(group.price)} / Đêm</span>
+                                        <div class="flex flex-col text-sm">
+                                            <span class="text-black">${dateLabel}:</span>
+                                            <span class="text-black font-bold mt-0.5">${renderCurrency(group.price)} / Đêm</span>
                                         </div>
                                     `;
                                 }).join('') : `
-                                    <div class="flex justify-between items-center text-sm">
-                                        <span class="text-slate-600">Giá Trung Bình:</span>
-                                        <span class="text-slate-800 font-bold">${renderCurrency(Math.round(room.basePrice / nights))} / Đêm</span>
+                                    <div class="flex flex-col text-sm">
+                                        <span class="text-black">Giá Trung Bình:</span>
+                                        <span class="text-black font-bold mt-0.5">${renderCurrency(Math.round(room.basePrice / nights))} / Đêm</span>
                                     </div>
                                 `}
                             </div>
@@ -149,13 +149,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
                         ${room.surchargeAllocated > 0 ? `
                         <div class="flex justify-between items-center py-2 border-b-2 border-dashed border-primary/40">
-                            <span class="text-slate-500 text-base font-medium">Phụ thu khách thứ 3:</span>
-                            <span class="text-slate-800 text-base font-bold">${renderCurrency(room.surchargeAllocated)}</span>
+                            <span class="text-black text-sm font-medium">Phụ thu khách thứ 3:</span>
+                            <span class="text-black text-sm font-bold">${renderCurrency(room.surchargeAllocated)}</span>
                         </div>` : ''}
 
                         <div class="flex justify-between items-center pt-2 text-primary">
-                            <span class="text-lg font-bold underline decoration-primary/30 underline-offset-4">Tổng cộng:</span>
-                            <span class="text-2xl font-bold tracking-tight">${renderCurrency(room.total)}</span>
+                            <span class="text-base font-bold">Tổng cộng:</span>
+                            <span class="text-base font-bold tracking-tight">${renderCurrency(room.total)}</span>
                         </div>
                     </div>
                 </div>
