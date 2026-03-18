@@ -1,14 +1,13 @@
 const express = require('express');
 const cors = require('cors');
-// Lấy đúng đoạn code: const { PayOS } = require('@payos/node');
 const { PayOS } = require('@payos/node'); 
 require('dotenv').config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use(express.static(__dirname)); // Serve static files
 
-// Đoạn 1: Khởi tạo (Lấy từ phần Basic usage của bạn)
 console.log("-----------------------------------------");
 console.log("PAYOS CONFIG CHECK:");
 console.log("Client ID:", process.env.PAYOS_CLIENT_ID ? "LOADED" : "MISSING");
@@ -22,11 +21,10 @@ const payos = new PayOS({
   checksumKey: process.env.PAYOS_CHECKSUM_KEY,
 });
 
-// Đoạn 2: Tạo link thanh toán (Lấy từ phần paymentRequests.create)
+// Endpoint: Create Payment Link
 app.post('/create-payment-link', async (req, res) => {
     try {
         const { amount, description } = req.body;
-        // Use 8-digit order code for better uniqueness
         const orderCode = Number(String(Date.now()).slice(-8)); 
 
         const paymentLinkRequest = {
@@ -34,25 +32,36 @@ app.post('/create-payment-link', async (req, res) => {
             amount: Number(amount),
             description: "Thanh toan Chon Village",
             cancelUrl: "https://webb-chonnnn.onrender.com",
-            returnUrl: "https://webb-chonnnn.onrender.com"
+            returnUrl: "https://webb-chonnnn.onrender.com/checkout.html"
         };
 
-        console.log(">>> CALLING PAYOS CREATE (paymentRequests):", paymentLinkRequest);
+        console.log(">>> [%s] CREATING PAYMENT:", new Date().toISOString(), orderCode);
         const paymentLink = await payos.paymentRequests.create(paymentLinkRequest);
-        
-        console.log(">>> PAYOS RESPONSE SUCCESS:", paymentLink.orderCode);
-        console.log(">>> FULL PAYOS RESPONSE:", JSON.stringify(paymentLink));
-
         res.json(paymentLink);
-
     } catch (error) {
-        console.error("Lỗi PayOS:", error);
-        res.status(500).json({ error: error.message });
+        console.error("Lỗi PayOS Create:", error);
+        res.status(500).json({ status: 'ERROR', error: error.message });
     }
 });
 
-app.listen(3000, () => {
+// Endpoint: Check Payment Status
+app.get('/check-payment/:orderCode', async (req, res) => {
+    try {
+        const orderCode = req.params.orderCode;
+        console.log(">>> [%s] CHECKING STATUS:", new Date().toISOString(), orderCode);
+        const orderInfo = await payos.getPaymentLinkInformation(orderCode);
+        console.log(">>> [%s] STATUS for %s: %s", new Date().toISOString(), orderCode, orderInfo.status);
+        res.json({ status: orderInfo.status });
+    } catch (error) {
+        console.error("Lỗi Check Status:", error);
+        res.status(500).json({ status: 'ERROR', error: error.message });
+    }
+});
+
+// Critical: Use process.env.PORT for Render compatibility
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => {
     console.log("-----------------------------------------");
-    console.log("🚀 SERVER CHON VILLAGE DA CHAY TAI CONG 3000");
+    console.log(`🚀 SERVER CHON VILLAGE RUNNING ON PORT ${PORT}`);
     console.log("-----------------------------------------");
 });

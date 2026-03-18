@@ -189,6 +189,61 @@
             <p class="mt-4 text-[10px] text-center text-primary italic opacity-60">
                 * Xác nhận sẽ được gửi qua Zalo ngay sau khi hệ thống ghi nhận.
             </p>
+            <!-- Payment Success & Bill Generation Section (Initially Hidden) -->
+            <div id="payment-success-section" class="hidden opacity-0 transition-all duration-700 space-y-8 py-8 border-t-2 border-primary/20 mt-8">
+                <div class="text-center space-y-2">
+                    <span class="material-symbols-outlined text-green-500 text-6xl animate-bounce">check_circle</span>
+                    <h2 class="font-serif text-3xl font-bold text-primary italic">𝐗𝐚́𝐜 𝐍𝐡𝐚̣̂𝐧 Đ𝐚̃ 𝐍𝐡𝐚̣̂𝐧 Đ𝐮̛𝐨̛̣𝐜 𝐂𝐨̣𝐜</h2>
+                    <p class="text-graphite/70 italic text-sm">Cảm ơn bạn đã lựa chọn Chồn Village. Vui lòng hoàn tất thông tin để nhận hóa đơn.</p>
+                </div>
+
+                <!-- Guest Info Form -->
+                <div class="p-6 bg-primary/5 rounded-xl border-2 border-primary/30 shadow-md space-y-6">
+                    <h3 class="font-serif text-lg font-bold text-primary text-center uppercase tracking-widest">Thông Tin Nhận Phòng</h3>
+                    <div class="space-y-4">
+                        <div class="flex flex-col">
+                            <label class="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Họ và Tên</label>
+                            <input id="success-guest-name" 
+                                   placeholder="VD: Nguyễn Văn A"
+                                   class="bg-transparent border-b-2 border-primary/40 focus:border-primary focus:ring-0 text-graphite text-lg p-2 rounded-none outline-none font-serif italic" 
+                                   type="text" />
+                        </div>
+                        <div class="flex flex-col">
+                            <label class="text-[10px] uppercase tracking-widest text-primary font-bold mb-1">Số Zalo Liên Hệ</label>
+                            <input id="success-guest-zalo" 
+                                   placeholder="09xx xxx xxx"
+                                   class="bg-transparent border-b-2 border-primary/40 focus:border-primary focus:ring-0 text-graphite text-lg p-2 rounded-none outline-none font-serif italic" 
+                                   type="tel" />
+                        </div>
+                    </div>
+                    <button id="generate-bill-btn"
+                        class="w-full bg-primary hover:bg-graphite hover:text-white text-ivory font-serif italic tracking-wider font-bold py-4 rounded-lg transition-all duration-300 shadow-xl flex items-center justify-center gap-2">
+                        <span>Xác Nhận & Xem Hóa Đơn</span>
+                        <span class="material-symbols-outlined">receipt_long</span>
+                    </button>
+                </div>
+
+                <!-- Final Bill Container (Initially Hidden) -->
+                <div id="final-bill-container" class="hidden opacity-0 transition-all duration-1000 bg-white p-8 rounded-xl shadow-2xl border-2 border-primary/20 relative overflow-hidden">
+                    <!-- Bill Header Decor -->
+                    <div class="absolute top-0 right-0 p-4 opacity-10">
+                        <span class="material-symbols-outlined text-9xl">villa</span>
+                    </div>
+
+                    <div id="bill-content" class="relative z-10 font-mono text-sm leading-relaxed text-black space-y-1">
+                        <!-- Content will be injected by JS -->
+                    </div>
+
+                    <div class="mt-8 flex gap-4">
+                        <button id="copy-bill-btn" class="flex-1 bg-primary text-ivory font-bold py-3 rounded-lg hover:bg-graphite transition-all flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">content_copy</span> Sao chép Hóa đơn
+                        </button>
+                        <button onclick="window.print()" class="flex-1 border-2 border-primary text-primary font-bold py-3 rounded-lg hover:bg-primary/10 transition-colors flex items-center justify-center gap-2">
+                            <span class="material-symbols-outlined">print</span> In Hóa Đơn
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
     <!-- Bottom Navigation Bar -->
