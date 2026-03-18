@@ -153,11 +153,14 @@
                         <h2 class="font-serif text-base font-bold text-primary text-center uppercase tracking-widest">Thanh toán chuyển khoản</h2>
                         
                         <div class="flex flex-col items-center gap-6">
-                            <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-primary/20 w-fit mx-auto">
+                            <div class="bg-white p-4 rounded-xl shadow-lg border-2 border-primary/20 w-fit mx-auto relative group">
                                 <div class="w-56 h-56 bg-white flex items-center justify-center relative overflow-hidden rounded-lg">
                                     <img id="checkout-qr" src="" alt="QR Thanh toán" class="w-full h-full object-contain" />
-                                    <div id="qr-loading" class="absolute inset-0 bg-white/80 flex items-center justify-center">
-                                        <span class="material-symbols-outlined animate-spin text-primary">sync</span>
+                                    <div id="qr-loading" class="absolute inset-0 bg-white/90 flex flex-col items-center justify-center p-4 text-center">
+                                        <span class="material-symbols-outlined animate-spin text-primary text-4xl mb-2">sync</span>
+                                        <p id="qr-status-msg" class="text-[10px] text-primary font-bold leading-tight">Đang khởi tạo thanh toán...<br/><span class="font-normal italic">(Hệ thống có thể mất 30s để khởi động lần đầu)</span></p>
+                                        <div class="text-[8px] text-gray-400 mt-1 opacity-50">v2.1-diag</div>
+                                        <button id="qr-retry-btn" class="hidden mt-4 bg-primary text-white text-[10px] px-4 py-2 rounded-full font-bold uppercase transition-all hover:scale-105 active:scale-95">Thử lại</button>
                                     </div>
                                 </div>
                             </div>
