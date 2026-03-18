@@ -33,8 +33,8 @@ app.post('/create-payment-link', async (req, res) => {
             orderCode: orderCode,
             amount: Number(amount),
             description: "Thanh toan Chon Village",
-            cancelUrl: "http://localhost:3000",
-            returnUrl: "http://localhost:3000"
+            cancelUrl: "https://webb-chonnnn.onrender.com",
+            returnUrl: "https://webb-chonnnn.onrender.com"
         };
 
         console.log(">>> CALLING PAYOS CREATE (paymentRequests):", paymentLinkRequest);

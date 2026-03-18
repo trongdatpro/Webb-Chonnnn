@@ -231,7 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let payOSData = null;
 
-    fetch('http://localhost:3000/create-payment-link', {
+    fetch('https://webb-chonnnn.onrender.com/create-payment-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(paymentData)
