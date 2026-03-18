@@ -500,7 +500,7 @@
                         if (s.parentNode) document.head.removeChild(s);
                         resolve(res);
                     };
-                    s.src = url + (url.includes('?') ? '&' : '?') + 'tqx=out:json;responseHandler:' + cbName;
+                    s.src = url + (url.includes('?') ? '&' : '?') + 'tqx=out:json;responseHandler:' + cbName + '&t=' + Date.now();
                     document.head.appendChild(s);
                 });
 

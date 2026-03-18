@@ -165,19 +165,15 @@
                             <div class="w-full space-y-4">
                                 <div class="flex flex-col text-center">
                                     <span class="text-base uppercase tracking-widest text-primary/70 font-bold">Ngân hàng</span>
-                                    <span class="text-base font-bold text-primary">Vietcombank</span>
+                                    <span id="display-bank-name" class="font-bold text-primary">Ngân hàng TMCP Phương Đông (OCB)</span>
                                 </div>
                                 <div class="flex flex-col text-center">
                                     <span class="text-base uppercase tracking-widest text-primary/70 font-bold">Số tài khoản</span>
-                                    <span class="text-base font-serif tracking-widest font-bold text-primary">0889 717 713</span>
+                                    <span id="display-acc-no" class="font-serif tracking-widest font-bold text-primary">0173 1000 0475 0004</span>
                                 </div>
                                 <div class="flex flex-col text-center">
                                     <span class="text-base uppercase tracking-widest text-primary/70 font-bold">Chủ tài khoản</span>
-                                    <span class="text-base font-serif font-bold uppercase text-primary">NGUYEN VAN CHON</span>
-                                </div>
-                                <div class="flex flex-col text-center border-t border-primary/20 pt-4">
-                                    <span class="text-base uppercase tracking-widest text-primary/70 font-bold">Nội dung chuyển khoản</span>
-                                    <span id="checkout-transfer-content" class="text-base font-bold text-primary">...</span>
+                                    <span id="display-acc-name" class="font-serif font-bold uppercase text-primary">TRAN TRONG DAT</span>
                                 </div>
                             </div>
                         </div>
@@ -187,8 +183,8 @@
             <!-- CTA Button -->
             <button id="confirm-btn"
                 class="hidden w-full bg-primary hover:bg-gradient-to-r hover:from-[#C8A96A] hover:via-[#E8D399] hover:to-[#C8A96A] hover:text-graphite text-ivory font-serif italic tracking-wider font-bold py-4 rounded-lg transition-all duration-500 shadow-xl active:scale-95 flex items-center justify-center gap-2">
-                <span>Tôi đã chuyển khoản - Gửi Biên Lai Zalo</span>
-                <span class="material-symbols-outlined">send</span>
+                <span>Xác Nhận & Thanh Toán Cọc Qua PayOS</span>
+                <span class="material-symbols-outlined">payments</span>
             </button>
             <p class="mt-4 text-[10px] text-center text-primary italic opacity-60">
                 * Xác nhận sẽ được gửi qua Zalo ngay sau khi hệ thống ghi nhận.
@@ -220,6 +216,7 @@
     <div id="toast-message"
         class="fixed bottom-24 left-1/2 -translate-x-1/2 text-primary bg-background-light px-6 py-3 rounded-full text-[11px] font-bold opacity-0 pointer-events-none transition-opacity duration-300 shadow-xl border border-primary/50 text-center w-5/6">
     </div>
+
 
     <script src="checkout.js"></script>
 

@@ -68,7 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
         roomsWithTotals.push({
             ...room,
             basePrice: roomBasePrice,
-            surchargeAllocated: 0,
+            surchargeAllocated: 0, 
+            surchargePerNight: 0,
             total: roomBasePrice
         });
     });
@@ -101,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (grandSurchargeTotal > 0) {
         roomsWithTotals.forEach((room) => {
             room.surchargeAllocated = (grandSurchargeTotal / roomsWithTotals.length);
+            room.surchargePerNight = (totalSurchargePerNight / roomsWithTotals.length);
             room.total = room.basePrice + room.surchargeAllocated;
         });
     }
@@ -125,32 +127,79 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span class="text-black text-sm font-bold leading-tight">Ngày Nhận ${formatDateObj(checkinDate)} - Ngày Trả ${formatDateObj(checkoutDate)} - ${nights + 1} ngày ${nights} đêm</span>
                         </div>
                         
-                        <div class="flex flex-col gap-2 py-4 border-b-2 border-t-2 border-dashed border-primary/40">
-                            <span class="text-black text-sm uppercase tracking-wider font-bold">Chi tiết giá phòng:</span>
-                            <div class="space-y-3">
-                                ${room.groupedNights ? room.groupedNights.map(group => {
-                                    const dateLabel = group.count > 1 
-                                        ? `Giá Ngày ${group.startDate}-${group.endDate}`
-                                        : `Giá ${group.isHoliday ? 'Ngày Lễ ' : 'Ngày '}${group.startDate}`;
-                                    return `
-                                        <div class="flex flex-col text-sm">
-                                            <span class="text-black">${dateLabel}:</span>
-                                            <span class="text-black font-bold mt-0.5">${renderCurrency(group.price)} / Đêm</span>
-                                        </div>
-                                    `;
-                                }).join('') : `
-                                    <div class="flex flex-col text-sm">
-                                        <span class="text-black">Giá Trung Bình:</span>
-                                        <span class="text-black font-bold mt-0.5">${renderCurrency(Math.round(room.basePrice / nights))} / Đêm</span>
-                                    </div>
-                                `}
+                                <div class="flex flex-col gap-2 py-4 border-b-2 border-t-2 border-dashed border-primary/40">
+                                    <span class="text-black text-sm uppercase tracking-wider font-bold">Chi tiết giá phòng:</span>
+                                    <div class="space-y-3">
+                                ${(() => {
+                                    const nDetails = room.nightlyDetails || [];
+                                    const showDailyBreakdown = room.showDailyBreakdown; 
+
+                                    // Determine Dynamic Legend Prices
+                                    let stayWeekdayPrice = null;
+                                    let stayWeekendPrice = null;
+
+                                    nDetails.forEach(night => {
+                                        // Note: in checkout, night.date is a string like "27.03"
+                                        // We better check night.isHoliday or other flags if available
+                                        // But rooms.js already calculated baseWeekday/baseWeekend
+                                    });
+
+                                    const baseWeekday = room.baseWeekday;
+                                    const baseWeekend = room.baseWeekend;
+
+                                    if (showDailyBreakdown) {
+                                        return (nDetails || []).map(night => {
+                                            let labelType = "Ngày ";
+                                            if (night.isHoliday || (night.note || "").toUpperCase() === "L") labelType = "Ngày Lễ ";
+                                            
+                                            const dateLabel = `Giá ${labelType}${night.date}:`;
+                                            return `
+                                                <div class="flex justify-between items-center text-sm border-b border-primary/10 pb-1 mb-1">
+                                                    <span class="text-black italic">${dateLabel}</span>
+                                                    <span class="text-black font-bold">${renderCurrency(night.price)} / Đêm</span>
+                                                </div>
+                                            `;
+                                        }).join('');
+                                    } else {
+                                        // Legend / Summary View
+                                        const baseWeekday = room.baseWeekday;
+                                        const baseWeekend = room.baseWeekend;
+                                        
+                                        let html = `
+                                            <div class="space-y-1">
+                                                <div class="flex justify-between items-center text-sm">
+                                                    <span class="text-black italic font-bold">Giá Trong tuần (T2-T5):</span>
+                                                    <span class="text-black font-bold">${renderCurrency(baseWeekday)}</span>
+                                                </div>
+                                                <div class="flex justify-between items-center text-sm">
+                                                    <span class="text-black italic font-bold">Giá Cuối tuần (T6-CN):</span>
+                                                    <span class="text-black font-bold">${renderCurrency(baseWeekend)}</span>
+                                                </div>
+                                            </div>`;
+
+                                        // Append holidays individually if any
+                                        const holidayNights = (nDetails || []).filter(n => n.isHoliday || (n.note || "").toUpperCase() === "L");
+                                        if (holidayNights.length > 0) {
+                                            html += `<div class="mt-2 pt-1 border-t border-primary/10">${holidayNights.map(night => {
+                                                const dateLabel = `Giá Ngày Lễ ${night.date}:`;
+                                                return `
+                                                    <div class="flex justify-between items-center text-[13px] mb-1">
+                                                        <span class="text-black italic">${dateLabel}</span>
+                                                        <span class="text-black font-bold">${renderCurrency(night.price)} / Đêm</span>
+                                                    </div>
+                                                `;
+                                            }).join('')}</div>`;
+                                        }
+                                        return html;
+                                    }
+                                })()}
                             </div>
                         </div>
 
                         ${room.surchargeAllocated > 0 ? `
                         <div class="flex justify-between items-center py-2 border-b-2 border-dashed border-primary/40">
-                            <span class="text-black text-sm font-medium">Phụ thu khách thứ 3:</span>
-                            <span class="text-black text-sm font-bold">${renderCurrency(room.surchargeAllocated)}</span>
+                            <span class="text-black text-sm font-bold uppercase">Surcharge/Phụ phí:</span>
+                            <span class="text-black text-sm font-bold">${renderCurrency(room.surchargePerNight)} / Đêm</span>
                         </div>` : ''}
 
                         <div class="flex justify-between items-center pt-2 text-primary">
@@ -166,7 +215,66 @@ document.addEventListener('DOMContentLoaded', () => {
     setSafeText('checkout-total', renderCurrency(grandTotalAmount));
     setSafeText('checkout-deposit', renderCurrency(grandTotalAmount >= 0 ? depositAmount : 0));
 
-    // 6. visibility & Agreement Logic
+    // 6. PayOS Dynamic Link Activation (Immediate on Load)
+    const qrImg = document.getElementById('checkout-qr');
+    const qrLoading = document.getElementById('qr-loading');
+    const displayAccNo = document.getElementById('display-acc-no');
+    const displayAccName = document.getElementById('display-acc-name');
+
+    if (qrLoading) qrLoading.classList.remove('hidden');
+
+    const phone = (bookingData.phone || '0000000000').replace(/\s+/g, '');
+    const paymentData = {
+        amount: depositAmount,
+        description: `COC CHON ${phone}`.substring(0, 25)
+    };
+
+    let payOSData = null;
+
+    fetch('http://localhost:3000/create-payment-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentData)
+    })
+    .then(async res => {
+        if (!res.ok) {
+            const errBody = await res.text();
+            throw new Error(`HTTP ${res.status}: ${errBody}`);
+        }
+        return res.json();
+    })
+    .then(data => {
+        console.log("PayOS Server Response:", data);
+        if (data && data.qrCode) {
+            payOSData = data;
+            // Update display with real PayOS Data
+            if (displayAccNo) displayAccNo.textContent = data.accountNumber;
+            if (displayAccName) displayAccName.textContent = data.accountName;
+            
+            if (qrImg) {
+                // Generate QR code from the official PayOS payload
+                // This payload contains the tracking info for your dashboard
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(data.qrCode)}`;
+                qrImg.src = qrUrl;
+                qrImg.onload = () => { if (qrLoading) qrLoading.classList.add('hidden'); };
+            }
+            console.log("%c [PayOS] Dynamic Order Recorded & QR Loaded", "color: green; font-weight: bold;");
+        } else {
+            throw new Error("Missing qrCode in PayOS response");
+        }
+    })
+    .catch(error => {
+        console.error("%c [PayOS Error] Tracking FAILED:", "color: red; font-weight: bold;", error);
+        // Fallback to manual if tracking fails
+        if (qrImg) {
+            // Manual fallback without pre-filled description
+            qrImg.src = `https://img.vietqr.io/image/OCB-0173100004750004-compact.png?amount=${depositAmount}&accountName=TRAN%20TRONG%20DAT`;
+            qrImg.onload = () => { if (qrLoading) qrLoading.classList.add('hidden'); };
+        }
+        console.warn("Using Manual Fallback (Non-tracked)");
+    });
+
+    // 7. visibility & Agreement Logic
     const agreeCheckbox = document.getElementById('agree-checkbox');
     const summarySection = document.getElementById('summary-section');
     const paymentSection = document.getElementById('payment-section');
@@ -175,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset Initial State
     if (confirmBtn) {
         confirmBtn.disabled = true;
-        confirmBtn.classList.remove('hidden');
         confirmBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
     }
     
@@ -186,7 +293,6 @@ document.addEventListener('DOMContentLoaded', () => {
         paymentSection.classList.add('hidden', 'opacity-0');
     }
 
-    // Toggle Visibility on Checkbox
     if (agreeCheckbox) {
         agreeCheckbox.addEventListener('change', (e) => {
             const isChecked = e.target.checked;
@@ -200,34 +306,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (paymentSection) {
                     paymentSection.classList.remove('hidden');
                     setTimeout(() => paymentSection.classList.remove('opacity-0'), 10);
-
-                    // Update QR and Transfer Content
-                    const qrImg = document.getElementById('checkout-qr');
-                    const qrLoading = document.getElementById('qr-loading');
-                    const transferContentEl = document.getElementById('checkout-transfer-content');
-                    
-                    const transferContent = `CHON ${bookingData.phone || ''}`.toUpperCase();
-                    if (transferContentEl) transferContentEl.textContent = transferContent;
-
-                    if (qrImg) {
-                        const bankId = 'VCB';
-                        const accountNo = '0889717713';
-                        const template = 'compact';
-                        const qrUrl = `https://img.vietqr.io/image/${bankId}-${accountNo}-${template}.png?amount=${depositAmount}&addInfo=${encodeURIComponent(transferContent)}&accountName=NGUYEN%20VAN%20CHON`;
-                        
-                        qrImg.src = qrUrl;
-                        qrImg.onload = () => {
-                            if (qrLoading) qrLoading.classList.add('hidden');
-                        };
-                    }
                 }
+                
                 // Unlock Button
                 if (confirmBtn) {
                     confirmBtn.disabled = false;
                     confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
                 }
+
+                // Smooth scroll to summary section
+                setTimeout(() => {
+                    if (summarySection) {
+                        const header = document.querySelector('header');
+                        const headerHeight = header ? header.offsetHeight : 80;
+                        const elementPosition = summarySection.getBoundingClientRect().top;
+                        const offsetPosition = elementPosition + window.pageYOffset - headerHeight - 20;
+                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                    }
+                }, 300);
             } else {
-                // Hide Summary & Payment
                 if (summarySection) {
                     summarySection.classList.add('opacity-0');
                     setTimeout(() => summarySection.classList.add('hidden'), 500);
@@ -236,7 +333,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     paymentSection.classList.add('opacity-0');
                     setTimeout(() => paymentSection.classList.add('hidden'), 500);
                 }
-                // Lock Button
                 if (confirmBtn) {
                     confirmBtn.disabled = true;
                     confirmBtn.classList.add('opacity-50', 'cursor-not-allowed', 'pointer-events-none');
@@ -245,45 +341,38 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 7. Zalo Submission Logic
+    // 8. Final Submission Logic
     if (confirmBtn) {
-        confirmBtn.addEventListener('click', () => {
-            const roomNames = roomsData.map(r => r.name).join(' + ');
-            const message = `Xin chào Chồn Village,\nTôi muốn gửi biên lai chuyển khoản cho đơn đặt phòng:\n- Phòng: ${roomNames}\n- Thời gian: ${dateRangeStr}\n- Tổng: ${renderCurrency(grandTotalAmount)}\n- Đã cọc (50%): ${renderCurrency(depositAmount)}\n- Tên khách: ${bookingData.name || 'Khách hàng'}\n- SĐT: ${bookingData.phone || ''}`;
-            
-            const zaloMsg = encodeURIComponent(message);
-            const zaloUrl = `https://zalo.me/0889717713?text=${zaloMsg}`;
-            const zaloDeepLink = `zalo://chat?phone=0889717713&text=${zaloMsg}`;
-            
-            // Try deep link
-            window.location.href = zaloDeepLink;
-            
-            // Fallback
-            setTimeout(() => {
-                window.open(zaloUrl, '_blank');
-            }, 500);
+        confirmBtn.innerHTML = `
+            <span>Tôi đã chuyển khoản - Hoàn tất đặt phòng</span>
+            <span class="material-symbols-outlined">check_circle</span>
+        `;
 
-            // Toast feedback
-            const toast = document.getElementById('toast-message');
-            if (toast) {
-                toast.innerHTML = `
-                    <div class="flex flex-col gap-1 items-center">
-                        <span class="material-symbols-outlined text-green-600 text-2xl">check_circle</span>
-                        <span>Đang kết nối tới Zalo...</span>
-                        <span>Xin cảm ơn bạn đã lựa chọn Chồn Village.</span>
-                    </div>
-                `;
-                toast.classList.remove('opacity-0');
-                
-                setTimeout(() => {
-                    toast.classList.add('opacity-0');
+        confirmBtn.addEventListener('click', () => {
+            const originalText = confirmBtn.innerHTML;
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = `<span class="material-symbols-outlined animate-spin">sync</span><span>Đang xử lý...</span>`;
+
+            // Simple Success Simulation (Real flow would check webhook, but for now we follow old manual flow)
+            setTimeout(() => {
+                const toast = document.getElementById('toast-message');
+                if (toast) {
+                    toast.innerHTML = `
+                        <div class="flex flex-col gap-1 items-center font-bold">
+                            <span class="material-symbols-outlined text-green-600 text-2xl">check_circle</span>
+                            <span>Đã xác nhận đặt phòng!</span>
+                            <span>Chúng tôi sẽ liên hệ lại với bạn sớm nhất.</span>
+                        </div>
+                    `;
+                    toast.classList.remove('opacity-0');
                     setTimeout(() => {
+                        toast.classList.add('opacity-0');
                         sessionStorage.removeItem('chonVillageBooking');
-                        sessionStorage.removeItem('chonVillageSelectedRoom');
+                        sessionStorage.removeItem('chonVillageSelectedRooms');
                         window.location.href = 'index.html';
-                    }, 500);
-                }, 5000);
-            }
+                    }, 3000);
+                }
+            }, 1000);
         });
     }
 });
